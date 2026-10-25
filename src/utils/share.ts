@@ -1,4 +1,4 @@
-import type { AppSettings, DailyRecord, DailyRituals, PartnerTreat, TimeLog } from '../types';
+import { SUBJECT_META, type AppSettings, type DailyRecord, type DailyRituals, type PartnerTreat, type SubjectCategory, type TimeLog } from '../types';
 import { formatDateLong, formatMinutes } from './dates';
 import { quoteOfTheDay } from '../data/seedData';
 
@@ -14,8 +14,18 @@ export interface DigestData {
 
 const ENERGY_LABELS = ['', '😴 Running on fumes', '😪 Tired but pushing', '🙂 Steady', '💪 Strong', '🔥 High Focus'];
 
-export function buildDigestText(d: DigestData, _settings: AppSettings): string {
-  const subjects = [...new Set(d.logs.map((l) => l.subject))];
+/** "Polity & Governance (GS2)" — the paper name, then the short code. */
+export function subjectShareLabel(subject: SubjectCategory): string {
+  const meta = SUBJECT_META[subject];
+  const name = meta.label.includes('·') ? meta.label.split('·').slice(1).join('·').trim() : meta.label;
+  return `${name} (${meta.short})`;
+}
+
+export function buildDigestText(d: DigestData, settings: AppSettings): string {
+  const subjects = d.logs.map((l) => {
+    const label = subjectShareLabel(l.subject);
+    return l.topic ? `${label} — ${l.topic}` : label;
+  });
 
   const ritualBits: string[] = [];
   if (d.rituals.newspaperRead) ritualBits.push('Newspaper ✓');
@@ -31,14 +41,14 @@ export function buildDigestText(d: DigestData, _settings: AppSettings): string {
     `🕊️ PrepStride Daily Digest — ${formatDateLong(d.date)}`,
     '',
     `⏳ Studied: ${formatMinutes(d.totalMinutes)} / ${formatMinutes(d.targetMinutes)} target`,
-    `📚 Subjects: ${subjects.length > 0 ? subjects.join(', ') : 'rest day'}`,
+    `📚 ${subjects.length > 0 ? subjects.join('\n') : 'Subjects: rest day'}`,
     ritualBits.length > 0 ? `✅ Rituals: ${ritualBits.join(' · ')}` : '🌱 Rituals: fresh start tomorrow',
     d.streak > 0 ? `🔥 Streak: ${d.streak} day${d.streak > 1 ? 's' : ''}` : '',
     energy ? `⚡ Energy: ${energy}` : '',
     d.record?.reflection ? `📝 "${d.record.reflection}"` : '',
     '',
     `💛 "${quoteOfTheDay(d.date)}"`,
-    '— sent with love via PrepStride 🐦'
+    `— ${settings.aspirantName || 'you'}, for ${settings.partnerName || 'you'} · PrepStride 🐦`
   ];
   return lines.filter((l) => l !== '').join('\n');
 }
@@ -63,8 +73,18 @@ export async function shareDailyDigest(cardBlob: Blob, textSummary: string): Pro
   return 'copied';
 }
 
-export async function redeemPartnerTreat(treat: PartnerTreat, aspirantName: string): Promise<void> {
-  const message = `🎉 PrepStride Milestone Reward!\n\n${aspirantName} just redeemed the reward coupon: "${treat.title}" (${treat.description})! ❤️\nLooking forward to celebrating this milestone together!\n\n— Pip 🐦✨`;
+/** Treat copy uses the names from setup. Seeded rows keep their ids, so this fixes already-saved coupons too. */
+export function treatBlurb(treat: { id: string; description: string }, aspirantName: string, partnerName: string): string {
+  const who = aspirantName.trim() || 'you';
+  const partner = partnerName.trim() || 'your partner';
+  if (treat.id === 'chefs_special') return `${partner} cooks ${who}'s favorite dinner.`;
+  if (treat.id === 'book_spree') return `A shopping spree for ${who}, on ${partner}.`;
+  return treat.description;
+}
+
+export async function redeemPartnerTreat(treat: PartnerTreat, aspirantName: string, partnerName = ''): Promise<void> {
+  const blurb = treatBlurb(treat, aspirantName, partnerName);
+  const message = `🎉 PrepStride Milestone Reward!\n\n${aspirantName} just redeemed the reward coupon: "${treat.title}" (${blurb})! ❤️\nLooking forward to celebrating this milestone together!\n\n— Pip 🐦✨`;
   const shareData = { title: 'PrepStride Treat Redeemed!', text: message };
   if (navigator.share) {
     try {

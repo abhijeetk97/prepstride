@@ -1,23 +1,25 @@
 import { useRef, useState } from 'react';
 import { Settings as SettingsIcon, Palette, Download, Upload, Check, Volume2 } from 'lucide-react';
 import type { AppData } from '../hooks/useAppData';
-import { db } from '../db';
-import { exportBackup, restoreBackup } from '../db/backup';
-import { SectionCard } from '../components/common';
-import { LEVEL_THRESHOLDS } from '../utils/gamification';
+import { DAILY_TARGET_MAX, DAILY_TARGET_MIN, DAILY_TARGET_STEP, db, setDailyTarget } from '../db';
+import { applyBackup, exportBackup } from '../db/backup';
+import { Modal, SectionCard, showToast } from '../components/common';
+import { formatDateShort } from '../utils/dates';
+import { parseBackupText, summarizeBackup, type BackupPreview } from '../utils/backupParse';
 import type { ThemeName } from '../types';
 
-const THEMES: { id: ThemeName; label: string; emoji: string; note: string; unlockLevel: number }[] = [
-  { id: 'warm-paper', label: 'Warm Parchment', emoji: '📜', note: 'Sepia reader', unlockLevel: 1 },
-  { id: 'midnight', label: 'Old Rajinder Nagar Midnight', emoji: '🌙', note: 'Focus dark', unlockLevel: 1 },
-  { id: 'mussoorie-mist', label: 'Mussoorie Mist', emoji: '🌲', note: 'Forest calm', unlockLevel: 3 },
-  { id: 'zen-forest', label: 'Zen Forest', emoji: '🍃', note: 'Deep green', unlockLevel: 4 },
-  { id: 'lbsnaa-gold', label: 'LBSNAA Gold', emoji: '🏅', note: 'Celebratory', unlockLevel: 5 }
+const THEMES: { id: ThemeName; label: string; emoji: string; note: string }[] = [
+  { id: 'warm-paper', label: 'Warm Parchment', emoji: '📜', note: 'Sepia reader' },
+  { id: 'midnight', label: 'Old Rajinder Nagar Midnight', emoji: '🌙', note: 'Focus dark' },
+  { id: 'mussoorie-mist', label: 'Mussoorie Mist', emoji: '🌲', note: 'Forest calm' },
+  { id: 'zen-forest', label: 'Zen Forest', emoji: '🍃', note: 'Deep green' },
+  { id: 'lbsnaa-gold', label: 'LBSNAA Gold', emoji: '🏅', note: 'Celebratory' }
 ];
 
-export function SettingsScreen({ data }: { data: AppData }) {
+export function SettingsScreen({ data, onRunSetup }: { data: AppData; onRunSetup: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [restoreMsg, setRestoreMsg] = useState<string | null>(null);
+  const [pending, setPending] = useState<BackupPreview | null>(null);
+  const [busy, setBusy] = useState(false);
   const s = data.settings;
 
   const patch = async (partial: Partial<typeof s>) => {
@@ -25,12 +27,25 @@ export function SettingsScreen({ data }: { data: AppData }) {
   };
 
   const onRestoreFile = async (file: File) => {
-    setRestoreMsg('Restoring…');
     try {
-      const result = await restoreBackup(file);
-      setRestoreMsg(`✅ Restored ${result.rows} records across ${result.tables} tables.`);
+      const preview = summarizeBackup(parseBackupText(await file.text()), file.name);
+      setPending(preview);
     } catch (e) {
-      setRestoreMsg(`❌ ${(e as Error).message}`);
+      showToast({ message: (e as Error).message });
+    }
+  };
+
+  const confirmRestore = async () => {
+    if (!pending) return;
+    setBusy(true);
+    try {
+      const result = await applyBackup(pending.payload);
+      setPending(null);
+      showToast({ message: `Restored ${result.rows} records across ${result.tables} tables.` });
+    } catch (e) {
+      showToast({ message: (e as Error).message });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -61,23 +76,36 @@ export function SettingsScreen({ data }: { data: AppData }) {
               <input type="number" className="input" value={s.targetYear} onChange={(e) => void patch({ targetYear: Number(e.target.value) })} />
             </div>
             <div>
-              <p className="label">Prelims date</p>
+              <p className="label">Expected prelims date</p>
               <input type="date" className="input" value={s.examDate ?? ''} onChange={(e) => void patch({ examDate: e.target.value || undefined })} />
+            </div>
+            <div className="col-span-2">
+              <p className="label">Official prelims date</p>
+              <input
+                type="date"
+                className="input"
+                value={s.officialExamDate ?? ''}
+                onChange={(e) => void patch({ officialExamDate: e.target.value || undefined })}
+              />
+              <p className="mt-1 text-[10px] text-inksoft">Leave this blank until the notification. The countdown stays “expected” until then.</p>
             </div>
           </div>
           <div>
             <p className="label">Daily target: {s.defaultDailyTargetMinutes / 60} hours</p>
             <input
               type="range"
-              min={120}
-              max={720}
-              step={30}
+              min={DAILY_TARGET_MIN}
+              max={Math.max(DAILY_TARGET_MAX, s.defaultDailyTargetMinutes)}
+              step={DAILY_TARGET_STEP}
               value={s.defaultDailyTargetMinutes}
-              onChange={(e) => void patch({ defaultDailyTargetMinutes: Number(e.target.value) })}
+              onChange={(e) => void setDailyTarget(Number(e.target.value))}
               className="w-full"
             />
-            <p className="text-[10px] text-inksoft">Applies to new days (today's target can be changed on the Dashboard).</p>
+            <p className="text-[10px] text-inksoft">Applies right away, including today. Home chips use this same 2–10h range.</p>
           </div>
+          <button className="btn-ghost w-full" onClick={onRunSetup}>
+            Run setup again
+          </button>
         </div>
       </SectionCard>
 
@@ -120,18 +148,16 @@ export function SettingsScreen({ data }: { data: AppData }) {
       <SectionCard title="Appearance" icon={<Palette size={14} />} className="mb-3">
         <div className="grid grid-cols-2 gap-2">
           {THEMES.map((t) => {
-            const rankUnlocked = t.unlockLevel <= 1 || data.xp.total >= LEVEL_THRESHOLDS[t.unlockLevel - 1].minXP;
             const active = s.theme === t.id;
             return (
               <button
                 key={t.id}
-                disabled={!rankUnlocked}
                 onClick={() => void patch({ theme: t.id })}
-                className={`rounded-xl border p-3 text-left transition-colors ${active ? 'border-brand bg-brandsoft/40' : 'border-line'} ${rankUnlocked ? '' : 'opacity-40'}`}
+                className={`min-h-11 rounded-xl border p-3 text-left transition-colors ${active ? 'border-brand bg-brandsoft/40' : 'border-line'}`}
               >
                 <p className="text-lg">{t.emoji}</p>
                 <p className="text-xs font-bold text-ink">{t.label}</p>
-                <p className="text-[10px] text-inksoft">{rankUnlocked ? t.note : `Unlocks at Rank ${t.unlockLevel}`}</p>
+                <p className="text-[10px] text-inksoft">{t.note}</p>
                 {active && (
                   <p className="mt-1 flex items-center gap-1 text-[10px] font-bold text-brand">
                     <Check size={11} /> active
@@ -144,7 +170,7 @@ export function SettingsScreen({ data }: { data: AppData }) {
       </SectionCard>
 
       {/* Data sovereignty */}
-      <SectionCard title="Backup & restore" icon={<Download size={14} />} className="mb-6">
+      <SectionCard title="Backup & restore" icon={<Download size={14} />} className="mb-16">
         <p className="mb-3 text-[11px] text-inksoft">
           Everything lives in this browser (IndexedDB). Export weekly and keep a copy in Google Drive — restore works on any device.
         </p>
@@ -167,11 +193,29 @@ export function SettingsScreen({ data }: { data: AppData }) {
             e.target.value = '';
           }}
         />
-        {restoreMsg && <p className="mt-2 rounded-lg bg-surface2 px-3 py-2 text-center text-xs font-semibold text-ink">{restoreMsg}</p>}
-        <p className="mt-2 text-center text-[10px] text-inksoft">
-          Restore replaces all current data. Pip guards it with a full transaction — zero partial states.
-        </p>
+        <p className="mt-2 text-center text-[10px] text-inksoft">Nothing is replaced until you confirm the summary.</p>
       </SectionCard>
+
+      <Modal open={pending !== null} onClose={() => !busy && setPending(null)} title="Replace all data?">
+        {pending && (
+          <div className="space-y-3">
+            <p className="text-sm text-ink">
+              {pending.sessions} sessions · {pending.tests} tests · {pending.mistakes} mistakes · {pending.syllabus} syllabus items
+            </p>
+            <p className="text-xs text-inksoft">
+              {pending.from && pending.to ? `${formatDateShort(pending.from)} – ${formatDateShort(pending.to)}` : 'No dated records'} · {pending.filename}
+            </p>
+            <div className="flex gap-2">
+              <button className="btn-ghost flex-1" disabled={busy} onClick={() => setPending(null)}>
+                Cancel
+              </button>
+              <button className="btn-danger flex-1" disabled={busy} onClick={() => void confirmRestore()}>
+                Replace all data
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

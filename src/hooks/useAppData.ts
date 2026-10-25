@@ -32,6 +32,8 @@ export interface AppData {
   gamification: GamificationState | undefined;
   xp: XPBreakdown;
   streak: StreakState;
+  /** Live Settings target. Applies to today immediately. */
+  todayTargetMinutes: number;
 }
 
 /** One reactive data source for the whole app (all Dexie tables + derived stats). */
@@ -63,7 +65,8 @@ export function useAppData(): AppData {
   const xp = computeXP(bundle);
   // Walk starts from 0 shields so the result is fully derived from log data
   // (deterministic across relaunches); App persists the result for display.
-  const streak = computeStreak(bundle, 0);
+  const todayTargetMinutes = settings?.defaultDailyTargetMinutes ?? DEFAULT_SETTINGS.defaultDailyTargetMinutes;
+  const streak = computeStreak(bundle, 0, todayTargetMinutes);
 
   return {
     loading: settings === undefined,
@@ -80,7 +83,8 @@ export function useAppData(): AppData {
     treats,
     gamification,
     xp,
-    streak
+    streak,
+    todayTargetMinutes
   };
 }
 

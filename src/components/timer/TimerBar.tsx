@@ -25,15 +25,15 @@ export function TimerBar() {
   const controls = (
     <>
       {t.pausedAt ? (
-        <button onClick={timer.resume} className="rounded-full bg-brand p-2.5 text-white shadow active:scale-90" aria-label="Resume">
+        <button onClick={timer.resume} className="hit rounded-full bg-brand text-white shadow active:scale-90" aria-label="Resume">
           <Play size={20} fill="currentColor" />
         </button>
       ) : (
-        <button onClick={timer.pause} className="rounded-full bg-brand p-2.5 text-white shadow active:scale-90" aria-label="Pause">
+        <button onClick={timer.pause} className="hit rounded-full bg-brand text-white shadow active:scale-90" aria-label="Pause">
           <Pause size={20} fill="currentColor" />
         </button>
       )}
-      <button onClick={() => void onStop()} className="rounded-full bg-surface2 p-2.5 text-ink active:scale-90" aria-label="Stop & save">
+      <button onClick={() => void onStop()} className="hit rounded-full bg-surface2 text-ink active:scale-90" aria-label="Stop & save">
         <Square size={18} fill="currentColor" />
       </button>
     </>
@@ -53,7 +53,7 @@ export function TimerBar() {
             <p className="text-sm font-extrabold tabular-nums text-brand">{clock}</p>
           </div>
           <div className="flex items-center gap-2">{controls}</div>
-          <button onClick={timer.openZen} className="rounded-full p-1.5 text-inksoft" aria-label="Zen mode">
+          <button onClick={timer.openZen} className="hit rounded-full text-inksoft" aria-label="Zen mode">
             <Maximize2 size={18} />
           </button>
         </div>
@@ -66,7 +66,7 @@ export function TimerBar() {
             <div className="rounded-full bg-surface2 px-3 py-1 text-xs font-bold text-inksoft">
               {t.mode === 'pomodoro' ? `Pomodoro · ${t.workMin}/${t.breakMin}` : 'Stopwatch'}
             </div>
-            <button onClick={timer.closeZen} className="rounded-full bg-surface2 p-2 text-inksoft" aria-label="Exit zen mode">
+            <button onClick={timer.closeZen} className="hit rounded-full bg-surface2 text-inksoft" aria-label="Exit zen mode">
               <Minimize2 size={18} />
             </button>
           </div>

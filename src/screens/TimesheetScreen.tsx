@@ -7,7 +7,7 @@ import { RetroLogModal } from '../components/timesheet/RetroLogModal';
 import { TimerStartModal } from '../components/timer/TimerStartModal';
 import { useTimer } from '../hooks/useTimer';
 import { SUBJECT_META, type TimeLog } from '../types';
-import { formatMinutes, todayISO, weekStartISO, monthStartISO, formatDateShort, lastNDays } from '../utils/dates';
+import { formatMinutes, todayISO, toISODate, weekStartISO, monthStartISO, formatDateShort, lastNDays } from '../utils/dates';
 
 type View = 'day' | 'week' | 'month';
 
@@ -34,7 +34,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
   const viewDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - dayOffset);
-    return d.toISOString().slice(0, 10);
+    return toISODate(d);
   }, [dayOffset]);
 
   const dayLogs = useMemo(() => data.timeLogs.filter((l) => l.date === viewDate), [data.timeLogs, viewDate]);
@@ -88,7 +88,10 @@ export function TimesheetScreen({ data }: { data: AppData }) {
             </button>
             <p className="text-sm font-bold text-ink">
               {dayOffset === 0 ? 'Today' : dayOffset === 1 ? 'Yesterday' : formatDateShort(viewDate)}
-              <span className="ml-2 text-inksoft">{formatMinutes(rangeStats.total)}</span>
+              <span className="ml-2 font-semibold text-inksoft">
+                {formatMinutes(rangeStats.total)}
+                {dayOffset === 0 ? ` today · target ${formatMinutes(data.todayTargetMinutes)}` : ''}
+              </span>
             </p>
             <button className="btn-ghost px-3 py-1.5" onClick={() => setDayOffset((o) => Math.max(0, o - 1))} disabled={dayOffset === 0}>
               →
@@ -109,7 +112,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
                       <li key={l.id} className="flex items-center gap-3 py-2.5">
                         <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: meta.color }} />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-ink">{l.topic || meta.label}</p>
+                          <p className="break-words text-sm font-semibold leading-snug text-ink">{l.topic || meta.label}</p>
                           <p className="text-[11px] text-inksoft">
                             {meta.short}
                             {l.startTime && l.endTime
@@ -123,7 +126,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
                         </div>
                         <span className="text-sm font-bold tabular-nums text-ink">{formatMinutes(l.durationMinutes)}</span>
                         <button
-                          className="rounded-full p-1.5 text-inksoft hover:text-[#C0503C]"
+                          className="hit shrink-0 rounded-full text-inksoft hover:text-[#C0503C]"
                           aria-label="Delete session"
                           onClick={() => deleteLog(l)}
                         >

@@ -1,5 +1,5 @@
 import type { AppSettings } from '../../types';
-import type { DigestData } from '../../utils/share';
+import { subjectShareLabel, type DigestData } from '../../utils/share';
 import { formatDateLong, formatMinutes } from '../../utils/dates';
 import { quoteOfTheDay } from '../../data/seedData';
 
@@ -11,7 +11,7 @@ const ENERGY_LABEL = ['', 'Exhausted but proud', 'Tired but steady', 'Calm & ste
  * via html-to-image — zero backend, PRD Module 9).
  */
 export function ShareCard({ digest, settings }: { digest: DigestData; settings: AppSettings }) {
-  const subjects = [...new Set(digest.logs.map((l) => l.subject))];
+  const sessions = digest.logs;
 
   const ritualBits: string[] = [];
   if (digest.rituals.newspaperRead) ritualBits.push('The Hindu ✓');
@@ -77,7 +77,16 @@ export function ShareCard({ digest, settings }: { digest: DigestData; settings: 
       {/* Subjects */}
       <div style={{ marginBottom: 14 }}>
         <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: '#8A7B68' }}>Subjects tackled</p>
-        <p style={{ margin: 0, fontSize: 17 }}>{subjects.length > 0 ? subjects.join(' · ') : 'Rest day 🌱'}</p>
+        {sessions.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 17 }}>Rest day 🌱</p>
+        ) : (
+          sessions.map((l, i) => (
+            <p key={l.id ?? i} style={{ margin: i === 0 ? 0 : '8px 0 0', fontSize: 17, lineHeight: 1.35 }}>
+              {subjectShareLabel(l.subject)}
+              {l.topic ? <span style={{ display: 'block', fontSize: 15, color: '#6B5F4E' }}>{l.topic}</span> : null}
+            </p>
+          ))
+        )}
       </div>
 
       {/* Rituals */}

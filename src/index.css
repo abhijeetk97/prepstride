@@ -100,25 +100,62 @@ input[type='range'] {
   @apply bg-surface rounded-2xl border border-line shadow-sm;
 }
 
+/* 44px hit floor. Icon-only controls use .hit. Chips and text buttons keep a 44px height.
+   Audited under 44px before this: energy/focus stars (24), ritual rows (~32), MCQ chips,
+   session delete (~27), book steppers (~20), modal close, timer zen, trash icons.
+   Export/Restore sit above the tab bar via the screen's bottom padding. */
+.hit {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .chip {
-  @apply inline-flex items-center gap-1 rounded-full border border-line bg-surface2 px-3 py-1.5 text-sm font-medium text-ink transition-colors;
+  @apply inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-full border border-line bg-surface2 px-3 py-1.5 text-sm font-medium text-ink transition-colors;
 }
 .chip-active {
   @apply border-transparent bg-brand text-white shadow;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow transition-transform active:scale-95 disabled:opacity-40;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow transition-transform active:scale-95 disabled:opacity-40;
 }
 .btn-ghost {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-transform active:scale-95 disabled:opacity-40;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-transform active:scale-95 disabled:opacity-40;
 }
 .btn-danger {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[#C0503C] px-4 py-2.5 text-sm font-semibold text-white transition-transform active:scale-95;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C0503C] px-4 py-2.5 text-sm font-semibold text-white transition-transform active:scale-95;
 }
 
 .input {
   @apply w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-inksoft/60 focus:border-brand focus:outline-none;
+}
+
+/* .input is unlayered, so its px-3 would cover a utility pl-9 and the icon would sit on the text. */
+.input.pl-9 {
+  padding-left: 2.25rem;
+}
+
+/* Five stars share a half-width column. The glyph stays 24px; the tap area is a 44px box. */
+.star-hit {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+.star-hit::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 
 .label {

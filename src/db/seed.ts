@@ -70,6 +70,7 @@ export async function addCustomTopic(paper: SyllabusItem['paper'], category: str
     microTopic,
     status: 'not_started',
     revisionCount: 0,
+    sortOrder: Date.now(),
     priority: 'medium',
     isCustom: true
   });

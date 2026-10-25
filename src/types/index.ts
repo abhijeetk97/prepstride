@@ -1,6 +1,7 @@
 // ─── PrepStride Data Models (TRD §3) ─────────────────────────────────────────
 
 export type SubjectCategory =
+  | 'PRELIMS'
   | 'GS1'
   | 'GS2'
   | 'GS3'
@@ -14,6 +15,7 @@ export const SUBJECT_META: Record<
   SubjectCategory,
   { label: string; short: string; color: string; hint: string }
 > = {
+  PRELIMS: { label: 'Prelims · GS Paper I', short: 'Prelims', color: '#B8431F', hint: 'The nearest exam — full Prelims GS paper' },
   GS1: { label: 'GS 1 · History & Society', short: 'GS1', color: '#E07A5F', hint: 'History, Geography, Art & Culture, Society' },
   GS2: { label: 'GS 2 · Polity & Governance', short: 'GS2', color: '#5B8E7D', hint: 'Polity, Governance, Social Justice, IR' },
   GS3: { label: 'GS 3 · Economy & Environment', short: 'GS3', color: '#4E7EA8', hint: 'Economy, S&T, Environment, Security, Disaster Mgmt' },
@@ -24,7 +26,9 @@ export const SUBJECT_META: Record<
   CURRENT_AFFAIRS: { label: 'Current Affairs & Newspaper', short: 'CA', color: '#8AB17D', hint: 'Newspaper, editorials, monthly magazines' }
 };
 
-export type Paper = 'PRELIMS' | 'GS1' | 'GS2' | 'GS3' | 'GS4' | 'OPTIONAL_P1' | 'OPTIONAL_P2' | 'CSAT';
+export type Paper = 'PRELIMS' | 'GS1' | 'GS2' | 'GS3' | 'GS4' | 'ESSAY' | 'OPTIONAL_P1' | 'OPTIONAL_P2' | 'CSAT';
+
+export const PAPER_ORDER: Paper[] = ['PRELIMS', 'GS1', 'GS2', 'GS3', 'GS4', 'ESSAY', 'CSAT', 'OPTIONAL_P1', 'OPTIONAL_P2'];
 
 export const PAPER_META: Record<Paper, string> = {
   PRELIMS: 'Prelims GS',
@@ -32,6 +36,7 @@ export const PAPER_META: Record<Paper, string> = {
   GS2: 'Mains GS 2',
   GS3: 'Mains GS 3',
   GS4: 'Mains GS 4',
+  ESSAY: 'Essay',
   OPTIONAL_P1: 'Optional Paper 1',
   OPTIONAL_P2: 'Optional Paper 2',
   CSAT: 'CSAT'
@@ -72,6 +77,8 @@ export interface DailyRituals {
   answersWritten: number;
   csatPracticed: boolean;
   currentAffairsMag: boolean;
+  /** Optional one-liner saved with the newspaper ritual, e.g. an editorial. */
+  newspaperNote?: string;
 }
 
 export const emptyRituals = (date: string): DailyRituals => ({
@@ -85,7 +92,15 @@ export const emptyRituals = (date: string): DailyRituals => ({
 });
 
 // 4. Micro-Topic Syllabus Item
-export type SyllabusStatus = 'not_started' | 'first_reading' | 'notes_done' | 'rev_1' | 'rev_2' | 'mastered';
+export type SyllabusStatus =
+  | 'not_started'
+  | 'first_reading'
+  | 'notes_done'
+  | 'rev_1'
+  | 'rev_2'
+  | 'rev_3'
+  | 'rev_4'
+  | 'mastered';
 
 export interface SyllabusItem {
   id: string;
@@ -94,9 +109,13 @@ export interface SyllabusItem {
   microTopic: string;
   status: SyllabusStatus;
   revisionCount: number;
+  /** Last touch — first reading, notes, or a completed revision. ISO date. */
   lastRevisedAt?: string;
+  /** Required for every status past not_started, except mastered (permanently out of the queue). */
   nextRevisionDue?: string;
   priority: 'high' | 'medium' | 'low';
+  /** Syllabus-document order. Lower comes first. Absent items sort last. */
+  sortOrder?: number;
   isCustom?: boolean;
 }
 
@@ -106,14 +125,16 @@ export const STATUS_META: Record<SyllabusStatus, { label: string; step: number; 
   notes_done: { label: 'Notes Prepared', step: 2, color: '#8AB17D' },
   rev_1: { label: 'Revision 1 Done', step: 3, color: '#D4A94E' },
   rev_2: { label: 'Revision 2 Done', step: 4, color: '#E07A5F' },
-  mastered: { label: 'Mastered', step: 5, color: '#9A6FB0' }
+  rev_3: { label: 'Revision 3 Done', step: 5, color: '#C98BB9' },
+  rev_4: { label: 'Revision 4+ Done', step: 6, color: '#5B8E7D' },
+  mastered: { label: 'Mastered', step: 7, color: '#9A6FB0' }
 };
 
 // 5. Mock Test Record
 export interface MockTestRecord {
   id?: number;
   date: string;
-  examType: 'PRELIMS' | 'MAINS';
+  examType: 'PRELIMS' | 'MAINS' | 'CSAT';
   testName: string;
   subject: string;
   totalQuestions: number;
@@ -138,7 +159,13 @@ export interface MistakeLog {
   subject: string;
   questionSummary: string;
   category: MistakeCategory;
+  /** Revision note. Line breaks are kept when the card renders. */
   correctConcept: string;
+  /** Next review (ISO date). Rolls forward 7 days from creation or the last review. */
+  reviewDue?: string;
+  reviewCount?: number;
+  /** Left the review rhythm after at least two reviews. The card stays in history. */
+  reviewRetired?: boolean;
   createdAt: number;
 }
 
@@ -156,7 +183,10 @@ export interface ResourceItem {
   subject: string;
   totalChapters: number;
   completedChapters: number;
+  /** Revision passes. Kept in step with `revisionsDone` for the polity badge. */
   currentRevision: number;
+  /** Revision passes shown as "Rev ×N". */
+  revisionsDone?: number;
 }
 
 // 8. Badges of Honor Model
@@ -198,7 +228,10 @@ export interface AppSettings {
   aspirantName: string;
   partnerName: string;
   targetYear: number;
+  /** Placeholder date used until UPSC notifies the real one. */
   examDate?: string;
+  /** Set only from an official notification. Replaces the “expected” countdown label. */
+  officialExamDate?: string;
   defaultDailyTargetMinutes: number;
   optionalSubjectName: string;
   optionalTemplateLoaded?: string;
@@ -208,6 +241,8 @@ export interface AppSettings {
     soundEnabled: boolean;
   };
   theme: ThemeName;
+  /** Set when the first-run wizard is finished or skipped. Absent → show the wizard. */
+  onboardedAt?: string;
 }
 
 // Aggregate bundle handed to gamification computations

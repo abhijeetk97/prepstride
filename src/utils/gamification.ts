@@ -1,5 +1,5 @@
 import type { DailyRituals, StatsBundle, SyllabusStatus } from '../types';
-import { addDays, todayISO, timeOfDayHour, fromISODate } from './dates';
+import { addDays, todayISO, timeOfDayHour } from './dates';
 
 // ─── Civil Services Journey Ranks (PRD Module 12.1) ─────────────────────────
 export interface LevelTier {
@@ -47,14 +47,10 @@ export function ritualCount(r: DailyRituals): number {
   return n;
 }
 
-const STATUS_REVISION_CYCLES: Record<SyllabusStatus, number> = {
-  not_started: 0,
-  first_reading: 0,
-  notes_done: 0,
-  rev_1: 1,
-  rev_2: 2,
-  mastered: 3
-};
+function revisionCycles(status: SyllabusStatus, revisionCount: number): number {
+  if (status === 'not_started' || status === 'first_reading' || status === 'notes_done') return 0;
+  return revisionCount;
+}
 
 export interface XPBreakdown {
   study: number;
@@ -68,13 +64,22 @@ export function computeXP(b: StatsBundle): XPBreakdown {
   const totalMinutes = b.timeLogs.reduce((s, l) => s + l.durationMinutes, 0);
   const study = Math.floor(totalMinutes / 30) * 10;
   const rituals = b.rituals.reduce((s, r) => s + ritualCount(r) * 25, 0);
-  const syllabusCycles = b.syllabus.reduce((s, i) => s + STATUS_REVISION_CYCLES[i.status] * 50, 0);
+  const syllabusCycles = b.syllabus.reduce((s, i) => s + revisionCycles(i.status, i.revisionCount) * 50, 0);
   const bookCycles = b.resources.reduce((s, r) => s + r.currentRevision * 50, 0);
   const mocks = b.mocks.length * 100;
   return { study, rituals, revisions: syllabusCycles + bookCycles, mocks, total: study + rituals + syllabusCycles + bookCycles + mocks };
 }
 
 // ─── Streak & Streak Shields ("Rest Day Grace") ─────────────────────────────
+
+/** A studied day: ≥ 30 minutes of logged study, independent of the daily target. */
+export const STUDY_DAY_MINUTES = 30;
+
+/** Target-met day: reached the real daily target (shields). Never capped. */
+export function targetMetDay(minutes: number, targetMinutes: number): boolean {
+  return minutes >= targetMinutes;
+}
+
 export interface StreakState {
   currentStreak: number;
   longestStreak: number;
@@ -85,20 +90,18 @@ export interface StreakState {
   metToday: boolean;
 }
 
-export function computeStreak(b: StatsBundle, storedShields: number): StreakState {
-  const today = todayISO();
-  const targetDefault = b.records.find((r) => r.date === today)?.targetMinutes ?? 480;
+export function computeStreak(b: StatsBundle, storedShields: number, defaultTargetMinutes = 240, today = todayISO()): StreakState {
+  // Today always uses the live Settings target. Past days keep the target stored
+  // on that day's record, so a mid-day change does not rewrite history.
+  const targetByDate = new Map(b.records.map((r) => [r.date, r.targetMinutes]));
 
   const minutesByDate = new Map<string, number>();
   for (const l of b.timeLogs) minutesByDate.set(l.date, (minutesByDate.get(l.date) ?? 0) + l.durationMinutes);
 
-  const dates = [...minutesByDate.keys()].sort();
+  const dates = [...minutesByDate.keys()].filter((d) => d <= today).sort();
   if (dates.length === 0) {
     return { currentStreak: 0, longestStreak: 0, shields: storedShields, shieldUsedForYesterday: false, daysTowardShield: 0, totalStudyDays: 0, metToday: false };
   }
-
-  const first = dates[0];
-  const last = dates[dates.length - 1] > today ? today : dates[dates.length - 1];
 
   let currentStreak = 0;
   let longestStreak = 0;
@@ -108,30 +111,20 @@ export function computeStreak(b: StatsBundle, storedShields: number): StreakStat
   let totalStudyDays = 0;
 
   const yesterday = addDays(today, -1);
-  let cursor = first;
-  while (cursor <= last) {
+  let cursor = dates[0];
+  while (cursor <= today) {
     const mins = minutesByDate.get(cursor) ?? 0;
-    const target = b.records.find((r) => r.date === cursor)?.targetMinutes ?? targetDefault;
-    // A light-minimum day (≥ 30 min) still counts as "studied", but only target-met extends the streak.
-    if (mins >= 30) totalStudyDays++;
-    const met = mins >= Math.min(target, 240); // streak bar: daily target, capped at 4h for sanity
+    const target = cursor === today ? defaultTargetMinutes : (targetByDate.get(cursor) ?? defaultTargetMinutes);
+    const studied = mins >= STUDY_DAY_MINUTES;
 
-    if (met) {
+    if (studied) {
+      totalStudyDays++;
       currentStreak++;
       longestStreak = Math.max(longestStreak, currentStreak);
-      daysTowardShield++;
-      if (daysTowardShield === 7) {
-        daysTowardShield = 0;
-        shields = Math.min(3, shields + 1);
-      }
-    } else if (cursor < today) {
-      // Today is still in progress — never penalised.
-      if (mins === 0 && shields > 0) {
-        shields--;
-        if (cursor === yesterday) shieldUsedForYesterday = true;
-        // Streak protected by shield
-      } else if (mins > 0 && shields > 0) {
-        // studied but target missed — shield also protects
+    } else if (mins === 0 && cursor < today) {
+      // Full rest day before today: a shield quietly protects it, else the streak breaks.
+      // Today is still in progress — never penalised. A 1–29 min day is neutral.
+      if (shields > 0) {
         shields--;
         if (cursor === yesterday) shieldUsedForYesterday = true;
       } else {
@@ -139,13 +132,19 @@ export function computeStreak(b: StatsBundle, storedShields: number): StreakStat
         daysTowardShield = 0;
       }
     }
+
+    if (targetMetDay(mins, target)) {
+      daysTowardShield++;
+      if (daysTowardShield === 7) {
+        daysTowardShield = 0;
+        shields = Math.min(3, shields + 1);
+      }
+    }
     cursor = addDays(cursor, 1);
   }
 
-  // If today already met the target, streak includes today; otherwise show streak up to yesterday.
   const todayMins = minutesByDate.get(today) ?? 0;
-  const todayTarget = b.records.find((r) => r.date === today)?.targetMinutes ?? targetDefault;
-  const metToday = todayMins >= Math.min(todayTarget, 240);
+  const metToday = targetMetDay(todayMins, defaultTargetMinutes);
 
   return { currentStreak, longestStreak, shields, shieldUsedForYesterday, daysTowardShield, totalStudyDays, metToday };
 }
@@ -189,18 +188,3 @@ export function treatUnlocked(requiredXP: number, xp: number): boolean {
   return xp >= requiredXP;
 }
 
-// ─── Spaced repetition intervals (TRD §4.2) ─────────────────────────────────
-export const REVISION_INTERVALS = [3, 7, 21, 60];
-
-export function nextRevisionDate(fromISO: string, revisionNumber: number): string {
-  // revisionNumber = the revision just completed (1-based)
-  const idx = Math.min(revisionNumber, REVISION_INTERVALS.length) - 1;
-  return addDays(fromISO, REVISION_INTERVALS[idx >= 0 ? idx : 0]);
-}
-
-/** Topics not revised for > 30 days (after having been read once). */
-export function isStale(lastRevisedAt: string | undefined, status: SyllabusStatus): boolean {
-  if (!lastRevisedAt || status === 'not_started' || status === 'first_reading') return false;
-  const days = Math.round((Date.now() - fromISODate(lastRevisedAt).getTime()) / 86_400_000);
-  return days > 30;
-}

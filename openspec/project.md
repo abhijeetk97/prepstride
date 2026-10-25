@@ -10,8 +10,8 @@ The app must reduce cognitive load, not add a second job to a 14-hour study day.
 - React 18 + TypeScript + Vite + Tailwind. Screens in `src/screens/*`, shared hooks in `src/hooks/*`, pure logic in `src/utils/*` (`scores.ts`, `gamification.ts`, `dates.ts`).
 - Phone-first: designed at ~390px. Desktop renders a centered 512px column — intentional; do not redesign for desktop.
 - Five themes via Tailwind tokens (`tailwind.config.js`); active theme in settings.
-- No test runner yet. Pure functions in `src/utils` are where unit tests belong (add vitest when first needed — see change `p0-fix-prelims-scoring`).
-- All touch controls target ≥ 44×44px hit areas (see change `p1-meet-touch-targets`).
+- Vitest covers pure functions in `src/utils` (`npm test`).
+- All touch controls target ≥ 44×44px hit areas. Icon-only controls use the `hit` class; chips and text buttons use a 44px minimum height.
 
 ## Non-goals (from review — do not build)
 - More ranks, badges, confetti, cosmetics, or XP-grinding mechanics.

@@ -46,6 +46,10 @@ export function formatDateShort(iso: string): string {
   return fromISODate(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
+export function formatDateWithYear(iso: string): string {
+  return fromISODate(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export function formatMinutes(mins: number): string {
   const m = Math.max(0, Math.round(mins));
   const h = Math.floor(m / 60);

@@ -29,7 +29,7 @@ const isIOS =
  * trigger from the More tab. Uses the native install prompt where available
  * (Android/Chrome) and friendly step-by-step instructions on iOS Safari.
  */
-export function InstallPrompt() {
+export function InstallPrompt({ allowAuto }: { allowAuto: boolean }) {
   const [open, setOpen] = useState(false);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(isStandalone());
@@ -58,15 +58,15 @@ export function InstallPrompt() {
     return () => window.removeEventListener('prepstride:show-install', show);
   }, []);
 
-  // Gentle auto-popup: not installed, not refused, at most once a week
+  // Auto-popup only after onboarding and two distinct study days, then at most weekly.
   useEffect(() => {
-    if (installed || isStandalone()) return;
+    if (!allowAuto || installed || isStandalone()) return;
     if (localStorage.getItem(NEVER_KEY)) return;
     const last = Number(localStorage.getItem(DISMISS_KEY) ?? 0);
     if (Date.now() - last < COOLDOWN_MS) return;
     const t = setTimeout(() => setOpen(true), AUTO_DELAY_MS);
     return () => clearTimeout(t);
-  }, [installed]);
+  }, [installed, allowAuto]);
 
   const dismiss = useCallback((never: boolean) => {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));

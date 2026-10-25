@@ -159,7 +159,8 @@ export function buildOptionalItems(templateKey: string): SyllabusItem[] {
       microTopic,
       status: 'not_started',
       revisionCount: 0,
-      priority: 'medium'
+      priority: 'medium',
+      sortOrder: i
     });
   });
   return items;

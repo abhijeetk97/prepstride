@@ -53,7 +53,7 @@ export function ToastHost() {
         <p className="text-sm font-semibold leading-snug text-paper">{t.message}</p>
         {t.actionLabel && (
           <button
-            className="shrink-0 rounded-full bg-paper/15 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-paper active:scale-95"
+            className="hit shrink-0 rounded-full bg-paper/15 px-3 text-xs font-extrabold uppercase tracking-wide text-paper active:scale-95"
             onClick={() => {
               t.onAction?.();
               hide();

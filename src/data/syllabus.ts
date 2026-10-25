@@ -140,12 +140,26 @@ const CSAT: Seed[] = [
   ['Data Interpretation', 'Data interpretation (Class X level) — charts, graphs, tables', 'high']
 ];
 
+const ESSAY: Seed[] = [
+  ['Essay practice', 'Structure drill — introduction, thesis, body, conclusion', 'high'],
+  ['Essay practice', 'Philosophical outline — one abstract topic in 30 minutes', 'high'],
+  ['Essay practice', 'GS-linked essay — a polity argument with a current example', 'high'],
+  ['Essay practice', 'Past-topic brainstorm — five UPSC topics, three arguments each', 'medium'],
+  ['Essay practice', 'Timed write — 1000–1200 words in 90 minutes', 'high'],
+  ['Essay practice', 'Self review — mark one essay for structure and examples', 'medium'],
+  ['Essay practice', 'Multi-dimensional essay — social, economic and ethical angles', 'medium'],
+  ['Essay practice', 'Quote essay — unpack the quote, then argue', 'medium'],
+  ['Essay practice', 'Way-forward endings — propose, don’t only summarise', 'medium'],
+  ['Essay practice', 'Language edit — rewrite one essay for clarity', 'low']
+];
+
 const PAPER_SEEDS: Record<string, Seed[]> = {
   PRELIMS,
   GS1,
   GS2,
   GS3,
   GS4,
+  ESSAY,
   CSAT
 };
 
@@ -167,7 +181,8 @@ export function buildSyllabusItems(): SyllabusItem[] {
         microTopic,
         status: 'not_started',
         revisionCount: 0,
-        priority
+        priority,
+        sortOrder: idx
       });
     });
   }

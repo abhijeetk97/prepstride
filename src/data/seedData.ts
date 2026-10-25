@@ -1,16 +1,8 @@
-import type { Badge, PartnerTreat, ResourceItem } from '../types';
+import type { Badge, PartnerTreat } from '../types';
+import { BOOK_CATALOG } from './books';
 
-// ─── Standard Reference Booklist (PRD Module 8) ─────────────────────────────
-export const DEFAULT_RESOURCES: ResourceItem[] = [
-  { title: 'Indian Polity — M. Laxmikanth', subject: 'Polity', totalChapters: 75, completedChapters: 0, currentRevision: 0 },
-  { title: 'Modern Indian History — Spectrum (Rajiv Ahir)', subject: 'Modern History', totalChapters: 42, completedChapters: 0, currentRevision: 0 },
-  { title: 'Environment — Shankar IAS / PMF IAS', subject: 'Environment', totalChapters: 34, completedChapters: 0, currentRevision: 0 },
-  { title: 'Indian Economy — Nitin Singhania / Ramesh Singh / Mrunal', subject: 'Economy', totalChapters: 30, completedChapters: 0, currentRevision: 0 },
-  { title: 'Ancient & Medieval India — RS Sharma / Satish Chandra / Old NCERTs', subject: 'Ancient & Medieval History', totalChapters: 36, completedChapters: 0, currentRevision: 0 },
-  { title: 'Indian Art & Culture — Nitin Singhania', subject: 'Art & Culture', totalChapters: 26, completedChapters: 0, currentRevision: 0 },
-  { title: 'Geography — Class 11 & 12 NCERTs + GC Leong', subject: 'Geography', totalChapters: 40, completedChapters: 0, currentRevision: 0 },
-  { title: 'Ethics — Lexicon / Subba Rao', subject: 'Ethics (GS4)', totalChapters: 20, completedChapters: 0, currentRevision: 0 }
-];
+// ─── Standard Reference Booklist (one row per book) ─────────────────────────
+export const DEFAULT_RESOURCES = BOOK_CATALOG;
 
 // ─── Badges of Honor (PRD Module 12.2) ──────────────────────────────────────
 export const BADGE_DEFS: Badge[] = [
@@ -77,7 +69,7 @@ export const DEFAULT_TREATS: PartnerTreat[] = [
   {
     id: 'chefs_special',
     title: "Chef's Special",
-    description: 'Partner cooks her favorite dinner.',
+    description: 'A favorite dinner, cooked by your partner.',
     requiredXP: 500,
     icon: '🍝',
     isCustom: false,
@@ -117,7 +109,7 @@ export const DEFAULT_TREATS: PartnerTreat[] = [
   {
     id: 'book_spree',
     title: 'Stationery / Book Shopping Spree',
-    description: 'Treat herself on his tab.',
+    description: 'A shopping spree, on your partner.',
     requiredXP: 4000,
     icon: '📚',
     isCustom: false,

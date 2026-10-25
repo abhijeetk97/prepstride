@@ -6,9 +6,11 @@ import { exportBackup } from './db/backup';
 import { emptyRituals } from './types';
 import { evaluateBadges } from './utils/gamification';
 import { todayISO } from './utils/dates';
+import { backfillSyllabusSchedule, ensureSyllabusOrder, splitCombinedBooks } from './db/backfill';
 import { BottomNav } from './components/layout/BottomNav';
 import { TimerBar } from './components/timer/TimerBar';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
+import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { Modal, ToastHost } from './components/common';
 import { Pip } from './components/mascot/Pip';
 import { useTimerLive } from './hooks/useTimer';
@@ -42,6 +44,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [showBackupNudge, setShowBackupNudge] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const data = useAppData();
   const timerLive = useTimerLive();
 
@@ -57,9 +60,24 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  // First-run seed
+  // First-run seed, then give every read topic a due date.
   useEffect(() => {
-    void seedIfEmpty().then(() => setReady(true));
+    void seedIfEmpty()
+      .then(() => backfillSyllabusSchedule())
+      .then(() => ensureSyllabusOrder())
+      .then(() => splitCombinedBooks())
+      .then(async () => {
+        const settings = await db.settings.get('current_settings');
+        const logs = await db.timeLogs.count();
+        if (settings && !settings.onboardedAt) {
+          if (logs > 0) {
+            await db.settings.update('current_settings', { onboardedAt: new Date().toISOString() });
+          } else {
+            setShowWizard(true);
+          }
+        }
+      })
+      .then(() => setReady(true));
   }, []);
 
   // Apply theme
@@ -74,10 +92,14 @@ export default function App() {
     if (!ready) return;
     const ensure = async () => {
       const today = todayISO();
-      await db.transaction('rw', [db.dailyRecords, db.dailyRituals, db.settings], async () => {
-        if (!(await db.dailyRecords.get(today))) {
-          const s = await db.settings.get('current_settings');
-          await db.dailyRecords.put({ date: today, targetMinutes: s?.defaultDailyTargetMinutes ?? 480 });
+      await db.transaction('rw', [db.settings, db.dailyRecords, db.dailyRituals], async () => {
+        const s = await db.settings.get('current_settings');
+        const target = s?.defaultDailyTargetMinutes ?? 240;
+        const rec = await db.dailyRecords.get(today);
+        if (!rec) {
+          await db.dailyRecords.put({ date: today, targetMinutes: target });
+        } else if (rec.targetMinutes !== target) {
+          await db.dailyRecords.put({ ...rec, targetMinutes: target });
         }
         if (!(await db.dailyRituals.get(today))) {
           await db.dailyRituals.put(emptyRituals(today));
@@ -168,17 +190,18 @@ export default function App() {
       case 'analytics':
         return <AnalyticsScreen data={data} />;
       case 'settings':
-        return <SettingsScreen data={data} />;
+        return <SettingsScreen data={data} onRunSetup={() => setShowWizard(true)} />;
       default:
         return <DashboardScreen data={data} navigate={navigate} />;
     }
   })();
 
   return (
-    <div className={`mx-auto min-h-screen max-w-lg bg-paper ${timerLive ? 'pb-44' : 'pb-24'}`}>
+    <div className={`mx-auto min-h-screen max-w-lg bg-paper ${timerLive ? 'pb-52' : 'pb-32'}`}>
       {screen}
       <TimerBar />
-      <InstallPrompt />
+      <InstallPrompt allowAuto={Boolean(data.settings.onboardedAt) && new Set(data.timeLogs.map((l) => l.date)).size >= 2} />
+      <OnboardingModal open={showWizard} onDone={() => setShowWizard(false)} />
       <BottomNav route={route} navigate={navigate} />
       <ToastHost />
 

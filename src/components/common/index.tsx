@@ -61,7 +61,7 @@ export function Modal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-bold text-ink">{title}</h3>
-          <button onClick={onClose} className="rounded-full p-1.5 text-inksoft hover:bg-surface2" aria-label="Close">
+          <button onClick={onClose} className="hit rounded-full text-inksoft hover:bg-surface2" aria-label="Close">
             <X size={18} />
           </button>
         </div>
@@ -81,14 +81,14 @@ export function StarRating({
   size?: number;
 }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex w-full">
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
           type="button"
           disabled={!onChange}
           onClick={() => onChange?.(n)}
-          className={`transition-transform ${onChange ? 'active:scale-125' : 'cursor-default'}`}
+          className={`star-hit transition-transform ${onChange ? 'active:scale-95' : 'cursor-default'}`}
           aria-label={`${n} star${n > 1 ? 's' : ''}`}
         >
           <svg width={size} height={size} viewBox="0 0 24 24" fill={n <= value ? 'rgb(var(--c-brand))' : 'none'} stroke={n <= value ? 'rgb(var(--c-brand))' : 'rgb(var(--c-ink-soft))'} strokeWidth="1.6">
@@ -124,9 +124,9 @@ export function EmptyState({ emoji, text, sub }: { emoji: string; text: string; 
 export function StatPill({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-xl bg-surface2 px-3 py-2 text-center">
-      <p className="text-lg font-extrabold text-ink">{value}</p>
+      <p className="text-lg font-extrabold leading-tight text-ink [overflow-wrap:anywhere]">{value}</p>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-inksoft">{label}</p>
-      {sub && <p className="text-[10px] text-inksoft">{sub}</p>}
+      {sub && <p className="text-[10px] leading-tight text-inksoft [overflow-wrap:anywhere]">{sub}</p>}
     </div>
   );
 }
