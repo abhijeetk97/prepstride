@@ -9,8 +9,9 @@ import { todayISO } from './utils/dates';
 import { BottomNav } from './components/layout/BottomNav';
 import { TimerBar } from './components/timer/TimerBar';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
-import { Modal } from './components/common';
+import { Modal, ToastHost } from './components/common';
 import { Pip } from './components/mascot/Pip';
+import { useTimerLive } from './hooks/useTimer';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { TimesheetScreen } from './screens/TimesheetScreen';
 import { SyllabusScreen } from './screens/SyllabusScreen';
@@ -42,6 +43,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [showBackupNudge, setShowBackupNudge] = useState(false);
   const data = useAppData();
+  const timerLive = useTimerLive();
 
   const navigate = useCallback((r: Route) => {
     window.location.hash = `/${r}`;
@@ -173,11 +175,12 @@ export default function App() {
   })();
 
   return (
-    <div className="mx-auto min-h-screen max-w-lg bg-paper pb-24">
+    <div className={`mx-auto min-h-screen max-w-lg bg-paper ${timerLive ? 'pb-44' : 'pb-24'}`}>
       {screen}
       <TimerBar />
       <InstallPrompt />
       <BottomNav route={route} navigate={navigate} />
+      <ToastHost />
 
       <Modal open={showBackupNudge} onClose={() => { setShowBackupNudge(false); sessionStorage.setItem('prepstride_backup_nudge', String(Date.now())); }} title="Weekly backup nudge 🕊️">
         <div className="flex flex-col items-center gap-3 text-center">

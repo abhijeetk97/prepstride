@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { Plus, Timer as TimerIcon, Trash2, CalendarDays, BarChart3 } from 'lucide-react';
 import type { AppData } from '../hooks/useAppData';
 import { db } from '../db';
-import { SectionCard, EmptyState, StatPill } from '../components/common';
+import { SectionCard, EmptyState, StatPill, showToast } from '../components/common';
 import { RetroLogModal } from '../components/timesheet/RetroLogModal';
 import { TimerStartModal } from '../components/timer/TimerStartModal';
-import { SUBJECT_META } from '../types';
+import { useTimer } from '../hooks/useTimer';
+import { SUBJECT_META, type TimeLog } from '../types';
 import { formatMinutes, todayISO, weekStartISO, monthStartISO, formatDateShort, lastNDays } from '../utils/dates';
 
 type View = 'day' | 'week' | 'month';
@@ -15,6 +16,20 @@ export function TimesheetScreen({ data }: { data: AppData }) {
   const [dayOffset, setDayOffset] = useState(0);
   const [retroOpen, setRetroOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
+  const timer = useTimer();
+
+  const deleteLog = (log: TimeLog) => {
+    if (log.id == null || !confirm('Delete this session?')) return;
+    const snapshot = { ...log };
+    void db.timeLogs.delete(log.id).then(() => {
+      showToast({
+        message: 'Session deleted',
+        actionLabel: 'Undo',
+        duration: 5000,
+        onAction: () => void db.timeLogs.put(snapshot)
+      });
+    });
+  };
 
   const viewDate = useMemo(() => {
     const d = new Date();
@@ -47,8 +62,8 @@ export function TimesheetScreen({ data }: { data: AppData }) {
       <header className="flex items-center justify-between pb-3 pt-4">
         <h1 className="text-xl font-extrabold text-ink">Timesheet</h1>
         <div className="flex gap-2">
-          <button className="btn-ghost px-3 py-2" onClick={() => setTimerOpen(true)}>
-            <TimerIcon size={16} /> Timer
+          <button className="btn-ghost px-3 py-2" onClick={() => (timer.timer ? timer.openZen() : setTimerOpen(true))}>
+            <TimerIcon size={16} /> {timer.timer ? 'Session' : 'Timer'}
           </button>
           <button className="btn-primary px-3 py-2" onClick={() => setRetroOpen(true)}>
             <Plus size={16} /> Log
@@ -87,7 +102,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
               <ul className="divide-y divide-line">
                 {dayLogs
                   .slice()
-                  .sort((a, b) => b.startTime.localeCompare(a.startTime))
+                  .sort((a, b) => (b.startTime ?? '').localeCompare(a.startTime ?? ''))
                   .map((l) => {
                     const meta = SUBJECT_META[l.subject];
                     return (
@@ -96,8 +111,13 @@ export function TimesheetScreen({ data }: { data: AppData }) {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-ink">{l.topic || meta.label}</p>
                           <p className="text-[11px] text-inksoft">
-                            {meta.short} · {new Date(l.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}–
-                            {new Date(l.endTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} ·{' '}
+                            {meta.short}
+                            {l.startTime && l.endTime
+                              ? ` · ${new Date(l.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}–${new Date(
+                                  l.endTime
+                                ).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
+                              : ' · no time recorded'}
+                            {' · '}
                             {l.mode === 'pomodoro' ? '🍅' : l.mode === 'stopwatch' ? '⏱️' : '✍️'}
                           </p>
                         </div>
@@ -105,9 +125,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
                         <button
                           className="rounded-full p-1.5 text-inksoft hover:text-[#C0503C]"
                           aria-label="Delete session"
-                          onClick={() => {
-                            if (l.id && confirm('Delete this session?')) void db.timeLogs.delete(l.id);
-                          }}
+                          onClick={() => deleteLog(l)}
                         >
                           <Trash2 size={15} />
                         </button>

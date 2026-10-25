@@ -1,14 +1,14 @@
-import { useState } from 'react';
 import { Pause, Play, Square, Maximize2, Minimize2, Coffee } from 'lucide-react';
 import { useTimer } from '../../hooks/useTimer';
 import { formatClock } from '../../utils/dates';
 import { Pip } from '../mascot/Pip';
+import { showToast } from '../common';
 import { SUBJECT_META } from '../../types';
 
 /** Slim always-visible bar while a session runs, expandable into full-screen zen mode. */
 export function TimerBar() {
   const timer = useTimer();
-  const [zen, setZen] = useState(false);
+  const zen = timer.zenOpen;
 
   if (!timer.timer) return null;
   const t = timer.timer;
@@ -16,6 +16,11 @@ export function TimerBar() {
 
   const clock = t.mode === 'pomodoro' ? formatClock(timer.phaseRemainingMs / 1000) : formatClock(timer.elapsedMs / 1000);
   const subjectMeta = SUBJECT_META[t.subject];
+
+  const onStop = async () => {
+    const result = await timer.stop();
+    if (result.discarded) showToast({ message: 'Under a minute — not logged' });
+  };
 
   const controls = (
     <>
@@ -28,7 +33,7 @@ export function TimerBar() {
           <Pause size={20} fill="currentColor" />
         </button>
       )}
-      <button onClick={() => void timer.stop()} className="rounded-full bg-surface2 p-2.5 text-ink active:scale-90" aria-label="Stop & save">
+      <button onClick={() => void onStop()} className="rounded-full bg-surface2 p-2.5 text-ink active:scale-90" aria-label="Stop & save">
         <Square size={18} fill="currentColor" />
       </button>
     </>
@@ -48,7 +53,7 @@ export function TimerBar() {
             <p className="text-sm font-extrabold tabular-nums text-brand">{clock}</p>
           </div>
           <div className="flex items-center gap-2">{controls}</div>
-          <button onClick={() => setZen(true)} className="rounded-full p-1.5 text-inksoft" aria-label="Zen mode">
+          <button onClick={timer.openZen} className="rounded-full p-1.5 text-inksoft" aria-label="Zen mode">
             <Maximize2 size={18} />
           </button>
         </div>
@@ -61,7 +66,7 @@ export function TimerBar() {
             <div className="rounded-full bg-surface2 px-3 py-1 text-xs font-bold text-inksoft">
               {t.mode === 'pomodoro' ? `Pomodoro · ${t.workMin}/${t.breakMin}` : 'Stopwatch'}
             </div>
-            <button onClick={() => setZen(false)} className="rounded-full bg-surface2 p-2 text-inksoft" aria-label="Exit zen mode">
+            <button onClick={timer.closeZen} className="rounded-full bg-surface2 p-2 text-inksoft" aria-label="Exit zen mode">
               <Minimize2 size={18} />
             </button>
           </div>

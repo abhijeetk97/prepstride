@@ -23,6 +23,7 @@ export interface ActiveTimer {
 
 export interface TimerSnapshot {
   timer: ActiveTimer | null;
+  zenOpen: boolean; // full-screen zen overlay requested (e.g. "Back to session")
   elapsedMs: number;
   phaseRemainingMs: number; // for pomodoro; total elapsed for stopwatch
   phaseTotalMs: number;
@@ -50,6 +51,7 @@ function elapsedOf(t: ActiveTimer): number {
 class TimerEngine {
   private listeners = new Set<() => void>();
   private timer: ActiveTimer | null = load();
+  private zen = false;
 
   subscribe = (fn: () => void): (() => void) => {
     this.listeners.add(fn);
@@ -58,11 +60,12 @@ class TimerEngine {
 
   getSnapshot = (): TimerSnapshot => {
     const t = this.timer;
-    if (!t) return { timer: null, elapsedMs: 0, phaseRemainingMs: 0, phaseTotalMs: 0 };
+    if (!t) return { timer: null, zenOpen: false, elapsedMs: 0, phaseRemainingMs: 0, phaseTotalMs: 0 };
     const elapsed = elapsedOf(t);
     const phaseTotalMs = t.mode === 'pomodoro' ? (t.phase === 'work' ? t.workMin : t.breakMin) * 60_000 : elapsed;
     return {
       timer: t,
+      zenOpen: this.zen,
       elapsedMs: elapsed,
       phaseRemainingMs: t.mode === 'pomodoro' ? Math.max(0, phaseTotalMs - elapsed) : elapsed,
       phaseTotalMs
@@ -81,6 +84,8 @@ class TimerEngine {
     breakMin?: number;
     soundEnabled?: boolean;
   }): void {
+    // Never replace a live session — a second start is a no-op.
+    if (this.timer) return;
     this.timer = {
       mode: opts.mode,
       phase: 'work',
@@ -92,7 +97,21 @@ class TimerEngine {
       breakMin: opts.breakMin ?? 10,
       soundEnabled: opts.soundEnabled ?? true
     };
+    this.zen = false;
     save(this.timer);
+    this.emit();
+  }
+
+  /** Open the full-screen zen overlay for the running session. */
+  openZen(): void {
+    if (!this.timer || this.zen) return;
+    this.zen = true;
+    this.emit();
+  }
+
+  closeZen(): void {
+    if (!this.zen) return;
+    this.zen = false;
     this.emit();
   }
 
@@ -114,9 +133,10 @@ class TimerEngine {
     this.emit();
   }
 
-  private async writeLog(t: ActiveTimer, startEpoch: number, durationMs: number): Promise<void> {
-    const minutes = Math.round(durationMs / 60_000);
-    if (minutes < 1) return;
+  private async writeLog(t: ActiveTimer, startEpoch: number, durationMs: number): Promise<boolean> {
+    // Floor, never round up: a 37s stop is 0 minutes, not "1m".
+    const minutes = Math.floor(durationMs / 60_000);
+    if (minutes < 1) return false;
     const startTime = new Date(startEpoch).toISOString();
     const log: TimeLog = {
       date: startTime.slice(0, 10),
@@ -129,23 +149,27 @@ class TimerEngine {
       createdAt: Date.now()
     };
     await db.timeLogs.add(log);
+    return true;
   }
 
-  /** Stop the session; logs elapsed focus time (≥ 1 min). Returns logged minutes. */
-  async stop(): Promise<number> {
+  /** Stop the session; logs elapsed focus time (≥ 1 min of real running time). */
+  async stop(): Promise<{ minutes: number; discarded: boolean }> {
     const t = this.timer;
-    if (!t) return 0;
+    if (!t) return { minutes: 0, discarded: false };
     const elapsed = elapsedOf(t);
-    const minutes = Math.round(elapsed / 60_000);
+    const minutes = Math.floor(elapsed / 60_000);
+    let discarded = false;
     if (t.phase === 'break') {
       // break time is not study time
     } else {
-      await this.writeLog(t, t.startEpoch - t.pausedAccumMs, elapsed);
+      const logged = await this.writeLog(t, t.startEpoch - t.pausedAccumMs, elapsed);
+      discarded = !logged;
     }
     this.timer = null;
+    this.zen = false;
     save(null);
     this.emit();
-    return t.phase === 'break' ? 0 : minutes;
+    return { minutes: t.phase === 'break' ? 0 : minutes, discarded };
   }
 
   /** Advance pomodoro phases; auto-saves each completed work block. */
@@ -184,6 +208,8 @@ export function useTimer(): TimerSnapshot & {
   pause: typeof timerEngine.pause;
   resume: typeof timerEngine.resume;
   stop: typeof timerEngine.stop;
+  openZen: typeof timerEngine.openZen;
+  closeZen: typeof timerEngine.closeZen;
 } {
   const [snap, setSnap] = useState<TimerSnapshot>(() => timerEngine.getSnapshot());
 
@@ -205,5 +231,30 @@ export function useTimer(): TimerSnapshot & {
     };
   }, []);
 
-  return { ...snap, start: timerEngine.start.bind(timerEngine), pause: timerEngine.pause.bind(timerEngine), resume: timerEngine.resume.bind(timerEngine), stop: timerEngine.stop.bind(timerEngine) };
+  return {
+    ...snap,
+    start: timerEngine.start.bind(timerEngine),
+    pause: timerEngine.pause.bind(timerEngine),
+    resume: timerEngine.resume.bind(timerEngine),
+    stop: timerEngine.stop.bind(timerEngine),
+    openZen: timerEngine.openZen.bind(timerEngine),
+    closeZen: timerEngine.closeZen.bind(timerEngine)
+  };
+}
+
+/** True while a session is live — re-renders only on live↔idle transitions,
+ *  so layout (e.g. reserving space for the timer bar) can depend on it cheaply. */
+export function useTimerLive(): boolean {
+  const [live, setLive] = useState(() => timerEngine.getSnapshot().timer != null);
+  useEffect(() => {
+    const update = () => {
+      const isLive = timerEngine.getSnapshot().timer != null;
+      setLive((prev) => (prev === isLive ? prev : isLive));
+    };
+    const unsub = timerEngine.subscribe(update);
+    return () => {
+      unsub();
+    };
+  }, []);
+  return live;
 }

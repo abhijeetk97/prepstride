@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import { Modal } from '../common';
 import { db } from '../../db';
 import { SUBJECT_META, type SubjectCategory, type TimeLog } from '../../types';
-import { todayISO } from '../../utils/dates';
+import { fromISODate, todayISO } from '../../utils/dates';
 
 const QUICK_MINUTES = [30, 45, 60, 90, 120, 180];
 const SUBJECTS = Object.keys(SUBJECT_META) as SubjectCategory[];
@@ -14,6 +14,7 @@ export function RetroLogModal({ open, onClose, defaultDate }: { open: boolean; o
   const [subject, setSubject] = useState<SubjectCategory>('GS2');
   const [minutes, setMinutes] = useState(60);
   const [topic, setTopic] = useState('');
+  const [startClock, setStartClock] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -21,23 +22,27 @@ export function RetroLogModal({ open, onClose, defaultDate }: { open: boolean; o
       setDate(defaultDate ?? todayISO());
       setSaved(false);
       setTopic('');
+      setStartClock('');
     }
   }, [open, defaultDate]);
 
   const save = async () => {
-    const now = new Date();
-    const end = new Date(now);
-    const start = new Date(now.getTime() - minutes * 60_000);
     const log: TimeLog = {
       date,
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
       durationMinutes: minutes,
       subject,
       topic: topic.trim(),
       mode: 'manual',
       createdAt: Date.now()
     };
+    // Only store times the user actually entered — blank means "no time recorded".
+    if (startClock) {
+      const [hh, mm] = startClock.split(':').map(Number);
+      const start = fromISODate(date);
+      start.setHours(hh, mm, 0, 0);
+      log.startTime = start.toISOString();
+      log.endTime = new Date(start.getTime() + minutes * 60_000).toISOString();
+    }
     await db.timeLogs.add(log);
     setSaved(true);
     setTimeout(() => {
@@ -85,6 +90,17 @@ export function RetroLogModal({ open, onClose, defaultDate }: { open: boolean; o
         <div>
           <p className="label">Topic note (optional)</p>
           <input className="input" placeholder="e.g. Polity — Fundamental Rights" value={topic} onChange={(e) => setTopic(e.target.value)} />
+        </div>
+
+        <div>
+          <p className="label">Start time (optional)</p>
+          <input
+            type="time"
+            className="input"
+            value={startClock}
+            onChange={(e) => setStartClock(e.target.value)}
+          />
+          <p className="mt-1 text-[11px] text-inksoft">Leave blank if unsure — only the duration is saved, no time is guessed.</p>
         </div>
 
         <div>

@@ -83,6 +83,7 @@ export function lastNDays(n: number, endISO: string = todayISO()): string[] {
   return out;
 }
 
-export function timeOfDayHour(isoTimestamp: string): number {
+export function timeOfDayHour(isoTimestamp?: string): number | null {
+  if (!isoTimestamp) return null;
   return new Date(isoTimestamp).getHours();
 }

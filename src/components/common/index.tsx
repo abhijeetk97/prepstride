@@ -1,6 +1,8 @@
 import { type ReactNode, useEffect } from 'react';
 import { X } from 'lucide-react';
 
+export { showToast, ToastHost, type ToastOptions } from './Toast';
+
 export function SectionCard({
   title,
   icon,

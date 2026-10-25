@@ -148,8 +148,8 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
         )}
 
         <div className="flex w-full gap-2">
-          <button className="btn-primary flex-1" onClick={() => setTimerOpen(true)}>
-            <Play size={16} fill="currentColor" /> {timer.timer ? 'Session running' : 'Start timer'}
+          <button className="btn-primary flex-1" onClick={() => (timer.timer ? timer.openZen() : setTimerOpen(true))}>
+            <Play size={16} fill="currentColor" /> {timer.timer ? 'Back to session' : 'Start timer'}
           </button>
           <button className="btn-ghost flex-1" onClick={() => setRetroOpen(true)}>
             <Plus size={16} /> Quick log

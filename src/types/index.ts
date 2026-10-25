@@ -38,11 +38,13 @@ export const PAPER_META: Record<Paper, string> = {
 };
 
 // 1. Time Log Model (Timer & Retro entries)
+// startTime/endTime are optional: quick logs without an entered time store
+// date + duration only — the app never invents a clock range.
 export interface TimeLog {
   id?: number;
   date: string; // 'YYYY-MM-DD'
-  startTime: string; // ISO timestamp
-  endTime: string; // ISO timestamp
+  startTime?: string; // ISO timestamp (only if user-entered or timer-captured)
+  endTime?: string; // ISO timestamp
   durationMinutes: number;
   subject: SubjectCategory;
   topic: string;

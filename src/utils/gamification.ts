@@ -172,8 +172,10 @@ export function evaluateBadges(b: StatsBundle): Record<string, boolean> {
     editorial_hawk: bestNews >= 14,
     negative_marking_tamer: b.mocks.some((m) => m.examType === 'PRELIMS' && m.totalQuestions >= 100 && m.accuracyRate >= 75),
     answer_alchemist: answersTotal >= 25,
-    dawn_warrior: b.timeLogs.some((l) => l.durationMinutes >= 120 && timeOfDayHour(l.startTime) < 8),
-    midnight_scholar: b.timeLogs.some((l) => l.durationMinutes >= 45 && timeOfDayHour(l.endTime) >= 22),
+    // Time-of-day badges evaluate only on records with a real captured start/end
+    // time — quick logs without a time never qualify.
+    dawn_warrior: b.timeLogs.some((l) => l.durationMinutes >= 120 && (timeOfDayHour(l.startTime) ?? 24) < 8),
+    midnight_scholar: b.timeLogs.some((l) => l.durationMinutes >= 45 && (timeOfDayHour(l.endTime) ?? -1) >= 22),
     iron_will: b.records.some((r) => {
       const mins = b.timeLogs.filter((l) => l.date === r.date).reduce((s, l) => s + l.durationMinutes, 0);
       return mins >= 240 && (r.energyRating ?? 5) <= 2;
