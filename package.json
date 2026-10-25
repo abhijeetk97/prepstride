@@ -9,7 +9,8 @@
     "build": "tsc && vite build",
     "build:dev": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && bash scripts/deploy-gh-pages.sh"
   },
   "dependencies": {
     "dexie": "^4.0.8",

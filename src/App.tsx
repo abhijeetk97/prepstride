@@ -8,6 +8,7 @@ import { evaluateBadges } from './utils/gamification';
 import { todayISO } from './utils/dates';
 import { BottomNav } from './components/layout/BottomNav';
 import { TimerBar } from './components/timer/TimerBar';
+import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { Modal } from './components/common';
 import { Pip } from './components/mascot/Pip';
 import { DashboardScreen } from './screens/DashboardScreen';
@@ -175,6 +176,7 @@ export default function App() {
     <div className="mx-auto min-h-screen max-w-lg bg-paper pb-24">
       {screen}
       <TimerBar />
+      <InstallPrompt />
       <BottomNav route={route} navigate={navigate} />
 
       <Modal open={showBackupNudge} onClose={() => { setShowBackupNudge(false); sessionStorage.setItem('prepstride_backup_nudge', String(Date.now())); }} title="Weekly backup nudge 🕊️">

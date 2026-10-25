@@ -42,27 +42,15 @@ npm run preview   # serve the production build locally
 
 **Stack:** React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3.4 · Dexie.js 4 (`prepstride_db`) · vite-plugin-pwa (Workbox) · html-to-image · Lucide icons.
 
-## Deployment
+## Deployment (no CI/CD — one command)
 
-### Current: branch deploy (`gh-pages`)
-
-The production bundle lives on the `gh-pages` branch and GitHub Pages serves it directly (`build_type: legacy`). To publish a new version:
+The production bundle is published from the `gh-pages` branch; GitHub Pages serves it directly. To ship a new version:
 
 ```bash
-npm run build
-# copy dist/ contents to gh-pages branch and push, e.g.:
-cd dist && git init && git checkout -b gh-pages && git add -A && git commit -m "deploy" && git push -f https://github.com/abhijeetk97/prepstride.git gh-pages
+npm run deploy   # builds, pushes dist/ to gh-pages, live in ~30s
 ```
 
-### Optional: Actions auto-deploy
-
-`.github/workflows/deploy.yml` builds and deploys on every push to `main` — currently **paused because the GitHub account has a billing hold on Actions**. Once billing is restored, re-enable with:
-
-```bash
-gh api repos/abhijeetk97/prepstride/pages -X PUT --input - <<'EOF'
-{"build_type": "workflow"}
-EOF
-```
+The app also shows an **Add to Home Screen** popup (native install prompt on Android/Chrome, step-by-step guide on iOS Safari) — also available anytime from **More → Add to Home Screen**.
 
 ## Data & privacy
 

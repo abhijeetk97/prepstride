@@ -1,4 +1,4 @@
-import { Trophy, BarChart3, Settings as SettingsIcon, Download, Github, Heart } from 'lucide-react';
+import { Trophy, BarChart3, Settings as SettingsIcon, Download, Github, Heart, Smartphone } from 'lucide-react';
 import type { AppData } from '../hooks/useAppData';
 import type { Route } from '../App';
 import { Pip } from '../components/mascot/Pip';
@@ -36,6 +36,19 @@ export function MoreScreen({ data, navigate }: { data: AppData; navigate: (r: Ro
             </button>
           </li>
         ))}
+        <li>
+          <button
+            className="card flex w-full items-center gap-3 p-4 text-left"
+            onClick={() => window.dispatchEvent(new CustomEvent('prepstride:show-install'))}
+          >
+            <Smartphone size={20} className="text-brand" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-ink">Add to Home Screen</p>
+              <p className="text-xs text-inksoft">Install Pip on the phone — instant launch, 100% offline</p>
+            </div>
+            <span className="text-inksoft">→</span>
+          </button>
+        </li>
         <li>
           <button className="card flex w-full items-center gap-3 p-4 text-left" onClick={() => void exportBackup()}>
             <Download size={20} className="text-brand" />
