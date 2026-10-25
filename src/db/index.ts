@@ -34,7 +34,7 @@ export class PrepStrideDatabase extends Dexie {
       dailyRituals: 'date',
       syllabusItems: 'id, paper, category, status, nextRevisionDue',
       mockTests: '++id, date, examType, subject',
-      mistakeLogs: '++id, mockTestId, category, subject',
+      mistakeLogs: '++id, mockTestId, category, subject, date, createdAt',
       resources: '++id, subject',
       badges: 'id, category, unlockedAt',
       partnerTreats: 'id, isUnlocked, isRedeemed',
