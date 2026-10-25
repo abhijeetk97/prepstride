@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ClipboardList, Plus, Trash2, TrendingUp, BookX, Search } from 'lucide-react';
+import { ClipboardList, Plus, Trash2, TrendingUp, Search } from 'lucide-react';
 import type { AppData } from '../hooks/useAppData';
 import { db } from '../db';
 import { SectionCard, Modal, EmptyState } from '../components/common';

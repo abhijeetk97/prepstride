@@ -14,7 +14,7 @@ export interface DigestData {
 
 const ENERGY_LABELS = ['', '😴 Running on fumes', '😪 Tired but pushing', '🙂 Steady', '💪 Strong', '🔥 High Focus'];
 
-export function buildDigestText(d: DigestData, settings: AppSettings): string {
+export function buildDigestText(d: DigestData, _settings: AppSettings): string {
   const subjects = [...new Set(d.logs.map((l) => l.subject))];
 
   const ritualBits: string[] = [];

@@ -2,7 +2,6 @@ import type { AppSettings } from '../../types';
 import type { DigestData } from '../../utils/share';
 import { formatDateLong, formatMinutes } from '../../utils/dates';
 import { quoteOfTheDay } from '../../data/seedData';
-import { Pip } from '../mascot/Pip';
 
 const ENERGY_EMOJI = ['', '😴', '😪', '🙂', '💪', '🔥'];
 const ENERGY_LABEL = ['', 'Exhausted but proud', 'Tired but steady', 'Calm & steady', 'Strong & focused', 'High Focus'];

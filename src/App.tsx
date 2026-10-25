@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAppData } from './hooks/useAppData';
-import { db, DEFAULT_SETTINGS } from './db';
+import { db } from './db';
 import { seedIfEmpty } from './db/seed';
 import { exportBackup } from './db/backup';
 import { emptyRituals } from './types';

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Play, Plus, Share2, Flame, Trophy, Target, ChevronRight, Moon, Sparkles } from 'lucide-react';
 import { toBlob } from 'html-to-image';
 import type { AppData } from '../hooks/useAppData';
-import { minutesByDate } from '../hooks/useAppData';
 import type { Route } from '../App';
 import { db } from '../db';
 import { ProgressRing, SectionCard, StarRating, StatPill, ConfettiBurst, Modal } from '../components/common';
