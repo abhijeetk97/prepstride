@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FDF6EC"/>
+      <stop offset="1" stop-color="#F5E6D3"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#bg)" stroke="#E8A33D" stroke-width="3"/>
+  <!-- Pip's head -->
+  <ellipse cx="32" cy="34" rx="15" ry="16" fill="#3B3A38"/>
+  <!-- wings -->
+  <path d="M17 34 Q8 28 10 40 Q12 50 20 46 Z" fill="#F49FB6"/>
+  <path d="M47 34 Q56 28 54 40 Q52 50 44 46 Z" fill="#7EC8E3"/>
+  <!-- belly -->
+  <ellipse cx="32" cy="40" rx="8.5" ry="9" fill="#F6C35B"/>
+  <!-- eyes -->
+  <circle cx="26.5" cy="29" r="3.6" fill="#fff"/>
+  <circle cx="37.5" cy="29" r="3.6" fill="#fff"/>
+  <circle cx="27.3" cy="29.6" r="1.8" fill="#232120"/>
+  <circle cx="38.3" cy="29.6" r="1.8" fill="#232120"/>
+  <!-- beak -->
+  <path d="M29 35 L35 35 L32 40 Z" fill="#E8763B"/>
+  <!-- tuft -->
+  <path d="M28 17 L32 8 L36 17" stroke="#3B3A38" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M22 19 L21 11 L28 16" stroke="#3B3A38" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M42 19 L43 11 L36 16" stroke="#3B3A38" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+</svg>
