@@ -12,7 +12,9 @@ import type {
   PartnerTreat,
   ResourceItem,
   SyllabusItem,
-  TimeLog
+  TimeLog,
+  WeeklyPlan,
+  WeeklyTarget
 } from '../types';
 
 export class PrepStrideDatabase extends Dexie {
@@ -27,6 +29,8 @@ export class PrepStrideDatabase extends Dexie {
   partnerTreats!: Table<PartnerTreat, string>;
   gamification!: Table<GamificationState, string>;
   settings!: Table<AppSettings, string>;
+  weeklyPlans!: Table<WeeklyPlan, string>;
+  weeklyTargets!: Table<WeeklyTarget, string>;
 
   constructor() {
     super('prepstride_db');
@@ -52,6 +56,10 @@ export class PrepStrideDatabase extends Dexie {
           if (row.reviewCount == null) row.reviewCount = 0;
         });
       });
+    this.version(3).stores({
+      weeklyPlans: 'weekStart',
+      weeklyTargets: 'id, weekStart, scheduledDate, createdAt'
+    });
   }
 }
 

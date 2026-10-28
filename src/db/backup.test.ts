@@ -28,5 +28,19 @@ describe('backup parse', () => {
     expect(summary.syllabus).toBe(2);
     expect(summary.from).toBe('2026-10-01');
     expect(summary.to).toBe('2026-10-24');
+    expect(summary.weeklyPlans).toBe(0);
+    expect(summary.weeklyTargets).toBe(0);
+  });
+
+  it('includes weekly goals and targets in the restore preview', () => {
+    const payload = parseBackupText(JSON.stringify({ appName: 'PrepStride', data: {
+      weeklyPlans: [{ weekStart: '2026-10-26', targetMinutes: 1440 }],
+      weeklyTargets: [{ weekStart: '2026-11-02', title: 'Revise polity' }]
+    } }));
+    const summary = summarizeBackup(payload, 'planner.json');
+    expect(summary.weeklyPlans).toBe(1);
+    expect(summary.weeklyTargets).toBe(1);
+    expect(summary.from).toBe('2026-10-26');
+    expect(summary.to).toBe('2026-11-02');
   });
 });

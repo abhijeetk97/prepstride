@@ -13,13 +13,17 @@ import type {
   PartnerTreat,
   ResourceItem,
   SyllabusItem,
-  TimeLog
+  TimeLog,
+  WeeklyPlan,
+  WeeklyTarget
 } from '../types';
 
 export interface AppData {
   loading: boolean;
   settings: AppSettings;
   timeLogs: TimeLog[];
+  weeklyPlans: WeeklyPlan[];
+  weeklyTargets: WeeklyTarget[];
   dailyRecords: DailyRecord[];
   todayRituals: DailyRituals | undefined;
   todayRecord: DailyRecord | undefined;
@@ -40,6 +44,8 @@ export interface AppData {
 export function useAppData(): AppData {
   const settings = useLiveQuery(() => db.settings.get('current_settings'), [], undefined);
   const timeLogs = useLiveQuery(() => db.timeLogs.orderBy('date').reverse().toArray(), [], [] as TimeLog[]);
+  const weeklyPlans = useLiveQuery(() => db.weeklyPlans.toArray(), [], [] as WeeklyPlan[]);
+  const weeklyTargets = useLiveQuery(() => db.weeklyTargets.toArray().then((targets) => targets.sort((a, b) => a.createdAt - b.createdAt)), [], [] as WeeklyTarget[]);
   const dailyRecords = useLiveQuery(() => db.dailyRecords.toArray(), [], [] as DailyRecord[]);
   const ritualsAll = useLiveQuery(() => db.dailyRituals.toArray(), [], [] as DailyRituals[]);
   const syllabus = useLiveQuery(() => db.syllabusItems.toArray(), [], [] as SyllabusItem[]);
@@ -73,6 +79,8 @@ export function useAppData(): AppData {
     settings: settings ?? DEFAULT_SETTINGS,
     timeLogs,
     dailyRecords,
+    weeklyPlans,
+    weeklyTargets,
     todayRituals,
     todayRecord,
     syllabus,

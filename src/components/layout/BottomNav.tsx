@@ -14,7 +14,7 @@ export function BottomNav({ route, navigate }: { route: Route; navigate: (r: Rou
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur pb-safe">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-2 pt-1.5">
         {TABS.map(({ route: r, label, Icon }) => {
-          const active = route === r || (route === 'analytics' && r === 'more') || (route === 'rewards' && r === 'more') || (route === 'settings' && r === 'more');
+          const active = route === r || (route === 'planner' && r === 'home') || (route === 'analytics' && r === 'more') || (route === 'rewards' && r === 'more') || (route === 'settings' && r === 'more');
           return (
             <button
               key={r}

@@ -10,11 +10,15 @@ const SUBJECTS = Object.keys(SUBJECT_META) as SubjectCategory[];
 export function TimerStartModal({
   open,
   onClose,
-  settings
+  settings,
+  initialSubject,
+  initialTopic
 }: {
   open: boolean;
   onClose: () => void;
   settings: AppSettings;
+  initialSubject?: SubjectCategory;
+  initialTopic?: string;
 }) {
   const [mode, setMode] = useState<'pomodoro' | 'stopwatch'>('pomodoro');
   const [subject, setSubject] = useState<SubjectCategory>('GS2');
@@ -24,10 +28,12 @@ export function TimerStartModal({
 
   useEffect(() => {
     if (open) {
+      if (initialSubject) setSubject(initialSubject);
+      if (initialTopic !== undefined) setTopic(initialTopic);
       setWorkMin(settings.timerSettings.workDuration);
       setBreakMin(settings.timerSettings.breakDuration);
     }
-  }, [open, settings.timerSettings]);
+  }, [open, settings.timerSettings, initialSubject, initialTopic]);
 
   const start = () => {
     timerEngine.start({
@@ -45,10 +51,10 @@ export function TimerStartModal({
     <Modal open={open} onClose={onClose} title="Start a focus session">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={() => setMode('pomodoro')} className={`chip justify-center py-2.5 ${mode === 'pomodoro' ? 'chip-active' : ''}`}>
+          <button onClick={() => setMode('pomodoro')} aria-pressed={mode === 'pomodoro'} className={`chip justify-center py-2.5 ${mode === 'pomodoro' ? 'chip-active' : ''}`}>
             🍅 Pomodoro
           </button>
-          <button onClick={() => setMode('stopwatch')} className={`chip justify-center py-2.5 ${mode === 'stopwatch' ? 'chip-active' : ''}`}>
+          <button onClick={() => setMode('stopwatch')} aria-pressed={mode === 'stopwatch'} className={`chip justify-center py-2.5 ${mode === 'stopwatch' ? 'chip-active' : ''}`}>
             ⏱️ Stopwatch
           </button>
         </div>
@@ -56,12 +62,12 @@ export function TimerStartModal({
         {mode === 'pomodoro' && (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="label">Focus (min)</p>
-              <input type="number" min={10} max={120} className="input" value={workMin} onChange={(e) => setWorkMin(Math.max(5, Math.min(180, Number(e.target.value))))} />
+              <label className="label" htmlFor="focus-minutes">Focus (min)</label>
+              <input id="focus-minutes" type="number" min={10} max={120} className="input" value={workMin} onChange={(e) => setWorkMin(Math.max(5, Math.min(180, Number(e.target.value))))} />
             </div>
             <div>
-              <p className="label">Break (min)</p>
-              <input type="number" min={5} max={60} className="input" value={breakMin} onChange={(e) => setBreakMin(Math.max(1, Math.min(90, Number(e.target.value))))} />
+              <label className="label" htmlFor="break-minutes">Break (min)</label>
+              <input id="break-minutes" type="number" min={5} max={60} className="input" value={breakMin} onChange={(e) => setBreakMin(Math.max(1, Math.min(90, Number(e.target.value))))} />
             </div>
           </div>
         )}
@@ -73,6 +79,7 @@ export function TimerStartModal({
               <button
                 key={s}
                 onClick={() => setSubject(s)}
+                aria-pressed={subject === s}
                 className={`chip ${subject === s ? 'chip-active' : ''}`}
                 style={subject === s ? { backgroundColor: SUBJECT_META[s].color } : { borderColor: SUBJECT_META[s].color + '55' }}
               >
@@ -83,8 +90,8 @@ export function TimerStartModal({
         </div>
 
         <div>
-          <p className="label">Topic (optional)</p>
-          <input className="input" placeholder="e.g. Spectrum — Swadeshi Movement" value={topic} onChange={(e) => setTopic(e.target.value)} />
+          <label className="label" htmlFor="focus-topic">Topic (optional)</label>
+          <input id="focus-topic" className="input" placeholder="e.g. Spectrum — Swadeshi Movement" value={topic} onChange={(e) => setTopic(e.target.value)} />
         </div>
 
         <button className="btn-primary w-full py-3" onClick={start}>

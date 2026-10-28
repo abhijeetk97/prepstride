@@ -1,3 +1,4 @@
+import { WeeklyPlannerCard } from './PlannerScreen';
 import { useEffect, useMemo, useState } from 'react';
 import { Play, Plus, Share2, Flame, Trophy, Target, ChevronRight, Moon, Sparkles } from 'lucide-react';
 import { toBlob } from 'html-to-image';
@@ -136,6 +137,8 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
         </div>
         <Pip mood={goalMet ? 'celebrate' : data.streak.shieldUsedForYesterday ? 'sleep' : 'cheer'} xp={data.xp.total} size={72} />
       </header>
+
+      <WeeklyPlannerCard data={data} navigate={navigate} />
 
       {firstRun && (
         <section className="card flex flex-col items-center gap-3 p-6 text-center">

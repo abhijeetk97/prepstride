@@ -1,4 +1,4 @@
-import { Trophy, BarChart3, Settings as SettingsIcon, Download, Github, Heart, Smartphone } from 'lucide-react';
+import { Trophy, BarChart3, Settings as SettingsIcon, Download, Github, Heart, Smartphone, CalendarDays } from 'lucide-react';
 import type { AppData } from '../hooks/useAppData';
 import type { Route } from '../App';
 import { Pip } from '../components/mascot/Pip';
@@ -8,6 +8,7 @@ import { levelForXP } from '../utils/gamification';
 export function MoreScreen({ data, navigate }: { data: AppData; navigate: (r: Route) => void }) {
   const tier = levelForXP(data.xp.total);
   const items: { route: Route; icon: React.ReactNode; title: string; sub: string }[] = [
+    { route: 'planner', icon: <CalendarDays size={20} className="text-brand" />, title: 'Weekly planner', sub: 'Choose topics, plan your days and track outcomes' },
     { route: 'rewards', icon: <Trophy size={20} className="text-brand" />, title: 'Rewards & Treat Box', sub: `Rank ${tier.level} · ${tier.title} · ${data.badges.filter((b) => b.unlockedAt).length}/${data.badges.length} badges` },
     { route: 'analytics', icon: <BarChart3 size={20} className="text-brand" />, title: 'Analytics & Books', sub: '365-day heatmap, subject split, booklist tracker' },
     { route: 'settings', icon: <SettingsIcon size={20} className="text-brand" />, title: 'Settings & Data', sub: 'Exam target, themes, backup & restore' }

@@ -22,6 +22,7 @@ import { MoreScreen } from './screens/MoreScreen';
 import { RewardsScreen } from './screens/RewardsScreen';
 import { AnalyticsScreen } from './screens/AnalyticsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { PlannerScreen } from './screens/PlannerScreen';
 
 export type Route =
   | 'home'
@@ -31,9 +32,10 @@ export type Route =
   | 'more'
   | 'rewards'
   | 'analytics'
-  | 'settings';
+  | 'settings'
+  | 'planner';
 
-const VALID_ROUTES: Route[] = ['home', 'study', 'syllabus', 'tests', 'more', 'rewards', 'analytics', 'settings'];
+const VALID_ROUTES: Route[] = ['home', 'study', 'syllabus', 'tests', 'more', 'rewards', 'analytics', 'settings', 'planner'];
 
 function routeFromHash(): Route {
   const h = window.location.hash.replace(/^#\/?/, '');
@@ -177,6 +179,8 @@ export default function App() {
     switch (route) {
       case 'home':
         return <DashboardScreen data={data} navigate={navigate} />;
+      case 'planner':
+        return <PlannerScreen data={data} navigate={navigate} />;
       case 'study':
         return <TimesheetScreen data={data} />;
       case 'syllabus':

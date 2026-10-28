@@ -254,3 +254,28 @@ export interface StatsBundle {
   mocks: MockTestRecord[];
   resources: ResourceItem[];
 }
+
+// Weekly plans stay independent of syllabus progress and recorded study time.
+export type PlanActivity = 'reading' | 'revision' | 'mcqs' | 'answers' | 'mock';
+export type PlanPaper = Paper | 'CURRENT_AFFAIRS';
+
+export interface WeeklyPlan {
+  weekStart: string;
+  targetMinutes: number;
+}
+
+export interface WeeklyTarget {
+  id: string;
+  weekStart: string;
+  topicId?: string;
+  title: string;
+  paper: PlanPaper;
+  activity: PlanActivity;
+  /** Optional measurable outcome, e.g. 30 PYQs + review incorrect answers. */
+  outcome: string;
+  scheduledDate?: string;
+  plannedMinutes: number;
+  completed: boolean;
+  createdAt: number;
+  carriedFrom?: string;
+}

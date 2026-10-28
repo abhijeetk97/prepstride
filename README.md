@@ -6,7 +6,7 @@
 >
 > 100% offline · local-first (IndexedDB) · zero backend · installable PWA · $0/month
 
-## What's inside (12 modules)
+## What's inside (13 modules)
 
 | # | Module | Where |
 |---|--------|-------|
@@ -22,6 +22,19 @@
 | 10 | Mental health — D-Day countdown, energy/focus stars, reflection, 5 zen themes | Home / Settings |
 | 11 | Data sovereignty — 1-click JSON backup/restore, weekly backup nudge | Settings |
 | 12 | Gamification — 7 Civil Services ranks with Pip evolution, 8 Badges of Honor, Streak Shields (rest-day grace, max 3), Treat Box couple coupons with custom builder & redemption share | Rewards |
+| 13 | Weekly planner — syllabus topic selection, custom targets, reading/revision/MCQ/answer/mock outcomes, day assignments, weekly hours goal, carry-forward, and timer handoff | Home → Your weekly plan / More → Weekly planner |
+
+## Weekly planning
+
+Open **Home → Your weekly plan** (also available in More). Weeks run Monday–Sunday.
+
+1. Set an hours goal for the selected week; six daily goals is an editable suggestion, leaving a catch-up day.
+2. Add syllabus topics across papers or a custom target for current affairs, essays, CSAT or a test series. Search by topic/category or filter revisions due by Sunday.
+3. Choose an activity, a clear outcome, an estimated duration per target, and a day (or leave it flexible).
+4. Use **Study this target** to open a timer prefilled with its subject and topic. Check off completed outcomes separately; actual hours come only from saved study sessions.
+5. Review unfinished work from the previous week and carry only what still matters. Copies retain the previous week's history and are not offered twice.
+
+Targets can be edited, rescheduled or removed with Undo. Weekly plans are stored offline in IndexedDB and included in JSON backups. Restoring older backups remains supported. Completing a planner target does not alter syllabus status or manufacture study time.
 
 ## Install as an app (100% offline)
 

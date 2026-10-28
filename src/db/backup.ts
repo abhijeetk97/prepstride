@@ -16,7 +16,9 @@ const TABLE_KEYS = [
   'badges',
   'partnerTreats',
   'gamification',
-  'settings'
+  'settings',
+  'weeklyPlans',
+  'weeklyTargets'
 ] as const;
 
 function rowsOf(data: Record<string, unknown[]>, key: string): unknown[] {
@@ -42,7 +44,9 @@ export async function exportBackup(): Promise<{ filename: string; exportedAt: st
       badges: await db.badges.toArray(),
       partnerTreats: await db.partnerTreats.toArray(),
       gamification: await db.gamification.toArray(),
-      settings: await db.settings.toArray()
+      settings: await db.settings.toArray(),
+      weeklyPlans: await db.weeklyPlans.toArray(),
+      weeklyTargets: await db.weeklyTargets.toArray()
     }
   };
 

@@ -202,6 +202,7 @@ export function SettingsScreen({ data, onRunSetup }: { data: AppData; onRunSetup
             <p className="text-sm text-ink">
               {pending.sessions} sessions · {pending.tests} tests · {pending.mistakes} mistakes · {pending.syllabus} syllabus items
             </p>
+            <p className="text-sm text-ink">{pending.weeklyPlans} weekly goals · {pending.weeklyTargets} weekly targets</p>
             <p className="text-xs text-inksoft">
               {pending.from && pending.to ? `${formatDateShort(pending.from)} – ${formatDateShort(pending.to)}` : 'No dated records'} · {pending.filename}
             </p>

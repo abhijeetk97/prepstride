@@ -17,7 +17,8 @@ The app must reduce cognitive load, not add a second job to a 14-hour study day.
 - More ranks, badges, confetti, cosmetics, or XP-grinding mechanics.
 - PYQ question banks, newspaper scrapers, AI answer checkers.
 - Accounts, cloud sync, feeds, coaching marketplace. JSON backup stays the safety net; multi-device only if she actually studies on two devices.
-- More optional-subject templates beyond the one she takes; weekly planner; desktop redesign.
+- More optional-subject templates beyond the one she takes; desktop redesign.
+- A weekly planner was explicitly requested on 2026-10-28 and is now in scope; keep it lightweight and connected to the existing syllabus and study timer.
 
 ## Change folder conventions
 - Change IDs are prefixed `p0-`, `p1-`, `p2-` matching the review's priority. Implement in order within a priority.
