@@ -1,6 +1,7 @@
 import { showToast } from '../components/common/Toast';
 import { parseBackupText, summarizeBackup, type BackupPayload, type BackupPreview } from '../utils/backupParse';
 import { db } from './index';
+import { toISODate } from '../utils/dates';
 
 export { parseBackupText, summarizeBackup };
 export type { BackupPayload, BackupPreview };
@@ -50,7 +51,7 @@ export async function exportBackup(): Promise<{ filename: string; exportedAt: st
     }
   };
 
-  const filename = `prepstride-backup-${exportedAt.slice(0, 10)}.json`;
+  const filename = `prepstride-backup-${toISODate(new Date(exportedAt))}.json`;
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

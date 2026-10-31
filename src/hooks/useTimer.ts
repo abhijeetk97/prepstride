@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { db } from '../db';
 import type { SubjectCategory, TimeLog } from '../types';
 import { playChime } from '../utils/share';
+import { toISODate } from '../utils/dates';
 
 // Persistent, timestamp-based timer. All elapsed math derives from wall-clock
 // epochs, so the timer stays accurate when the mobile browser throttles
@@ -139,7 +140,7 @@ class TimerEngine {
     if (minutes < 1) return false;
     const startTime = new Date(startEpoch).toISOString();
     const log: TimeLog = {
-      date: startTime.slice(0, 10),
+      date: toISODate(new Date(startEpoch)), // local day, not UTC
       startTime,
       endTime: new Date(startEpoch + durationMs).toISOString(),
       durationMinutes: minutes,

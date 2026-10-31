@@ -7,7 +7,7 @@ import { Pip } from '../components/mascot/Pip';
 import { LEVEL_THRESHOLDS, levelForXP, nextLevelProgress } from '../utils/gamification';
 import { redeemPartnerTreat, treatBlurb } from '../utils/share';
 import type { PartnerTreat } from '../types';
-import { formatDateShort } from '../utils/dates';
+import { formatDateShort, toISODate } from '../utils/dates';
 
 export function RewardsScreen({ data }: { data: AppData }) {
   const [customOpen, setCustomOpen] = useState(false);
@@ -114,7 +114,7 @@ export function RewardsScreen({ data }: { data: AppData }) {
                 </div>
                 <p className="text-xs font-bold text-ink">{b.title}</p>
                 <p className="mt-0.5 text-[10px] leading-snug text-inksoft">{b.description}</p>
-                {unlocked && b.unlockedAt && <p className="mt-1 text-[9px] font-semibold text-brand">Unlocked {formatDateShort(b.unlockedAt.slice(0, 10))}</p>}
+                {unlocked && b.unlockedAt && <p className="mt-1 text-[9px] font-semibold text-brand">Unlocked {formatDateShort(toISODate(new Date(b.unlockedAt)))}</p>}
               </div>
             );
           })}
@@ -149,7 +149,7 @@ export function RewardsScreen({ data }: { data: AppData }) {
                     {unlocked ? (
                       t.isRedeemed ? (
                         <span className="shrink-0 rounded-full bg-surface2 px-2.5 py-1 text-[10px] font-bold text-inksoft">
-                          Redeemed {t.redeemedAt ? formatDateShort(t.redeemedAt.slice(0, 10)) : ''}
+                          Redeemed {t.redeemedAt ? formatDateShort(toISODate(new Date(t.redeemedAt))) : ''}
                         </span>
                       ) : (
                         <button className="btn-primary shrink-0 px-3 py-1.5 text-xs" onClick={() => setRedeemConfirm(t)}>
