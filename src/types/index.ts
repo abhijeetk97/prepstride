@@ -223,6 +223,9 @@ export interface GamificationState {
 // 11. Application Settings
 export type ThemeName = 'warm-paper' | 'midnight' | 'zen-forest' | 'mussoorie-mist' | 'lbsnaa-gold';
 
+/** 'system' follows the OS reduced-motion setting: Full normally, Calm when reduced. */
+export type MotionSetting = 'system' | 'full' | 'calm' | 'off';
+
 export interface AppSettings {
   id: string; // 'current_settings'
   aspirantName: string;
@@ -241,6 +244,8 @@ export interface AppSettings {
     soundEnabled: boolean;
   };
   theme: ThemeName;
+  /** Animation tier. Absent (older backups) means 'system'. */
+  motion?: MotionSetting;
   /** Set when the first-run wizard is finished or skipped. Absent → show the wizard. */
   onboardedAt?: string;
 }

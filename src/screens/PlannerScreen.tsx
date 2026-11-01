@@ -68,7 +68,7 @@ export function PlannerScreen({ data, navigate }: { data: AppData; navigate: (ro
     <div className="planner px-4 pt-safe">
       <header className="flex items-center gap-2 pb-4 pt-3">
         <button className="hit -ml-2 shrink-0 rounded-xl text-inksoft" aria-label="Back to Home" onClick={() => navigate('home')}><ArrowLeft size={20} /></button>
-        <div className="min-w-0 flex-1"><h1 className="text-2xl font-extrabold tracking-tight text-ink">Weekly planner</h1><p className="mt-1 text-xs text-inksoft">A steady week, one topic at a time.</p></div>
+        <div className="min-w-0 flex-1"><h1 className="font-display text-2xl text-ink">Weekly planner</h1><p className="mt-1 text-xs text-inksoft">A steady week, one topic at a time.</p></div>
         <CalendarDays size={22} className="shrink-0 text-inksoft" />
       </header>
 

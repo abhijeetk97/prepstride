@@ -17,7 +17,8 @@ export default {
         accent: 'rgb(var(--c-accent) / <alpha-value>)'
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['Bricolage Grotesque', 'system-ui', 'sans-serif'],
         serif: ['Georgia', 'Cambria', 'serif']
       },
       borderRadius: {

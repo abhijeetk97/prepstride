@@ -12,6 +12,7 @@ export interface ToastOptions {
 }
 
 let current: ToastOptions | null = null;
+let serial = 0;
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<() => void>();
 
@@ -28,6 +29,7 @@ function hide(): void {
 
 export function showToast(opts: ToastOptions): void {
   current = opts;
+  serial += 1;
   if (hideTimer) clearTimeout(hideTimer);
   hideTimer = setTimeout(hide, opts.duration ?? 3500);
   emit();
@@ -49,7 +51,10 @@ export function ToastHost() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center px-4 pt-safe" role="status" aria-live="polite">
-      <div className="pointer-events-auto mt-3 flex w-full max-w-sm items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3 shadow-xl animate-slide-up">
+      <div
+        key={serial}
+        className="toast-panel elev-3 pointer-events-auto relative mt-3 flex w-full max-w-sm items-center justify-between gap-3 overflow-hidden rounded-2xl bg-ink px-4 py-3"
+      >
         <p className="text-sm font-semibold leading-snug text-paper">{t.message}</p>
         {t.actionLabel && (
           <button
@@ -61,6 +66,15 @@ export function ToastHost() {
           >
             {t.actionLabel}
           </button>
+        )}
+        {/* Undo window: the bar empties as the chance to undo runs out. */}
+        {t.actionLabel && (
+          <span
+            key={`bar-${serial}`}
+            aria-hidden
+            className="toast-countdown absolute inset-x-0 bottom-0 h-[3px] bg-paper/45"
+            style={{ ['--toast-ms' as string]: `${t.duration ?? 3500}ms` }}
+          />
         )}
       </div>
     </div>

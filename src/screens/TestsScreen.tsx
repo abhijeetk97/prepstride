@@ -70,7 +70,7 @@ export function TestsScreen({ data }: { data: AppData }) {
   return (
     <div className="px-4 pt-safe">
       <header className="flex items-center justify-between pb-3 pt-4">
-        <h1 className="text-xl font-extrabold text-ink">Tests & Mistake Diary</h1>
+        <h1 className="font-display text-2xl text-ink">Tests & Mistake Diary</h1>
         <button
           className="btn-primary px-3 py-2"
           onClick={() => (tab === 'prelims' ? setPrelimsOpen(true) : tab === 'mains' ? setMainsOpen(true) : tab === 'csat' ? setCsatOpen(true) : setMistakeOpen(true))}
@@ -119,10 +119,10 @@ export function TestsScreen({ data }: { data: AppData }) {
       <div className="no-scrollbar mb-3 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1">
         {(
           [
-            ['prelims', `🎯 Prelims (${prelimsMocks.length})`],
-            ['csat', `📐 CSAT (${csatMocks.length})`],
-            ['mains', `📝 Mains (${mainsMocks.length})`],
-            ['mistakes', `🧩 Mistakes (${data.mistakes.length})`]
+            ['prelims', `Prelims (${prelimsMocks.length})`],
+            ['csat', `CSAT (${csatMocks.length})`],
+            ['mains', `Mains (${mainsMocks.length})`],
+            ['mistakes', `Mistakes (${data.mistakes.length})`]
           ] as [Tab, string][]
         ).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} className={`chip shrink-0 snap-start ${tab === t ? 'chip-active' : ''}`}>
@@ -156,7 +156,7 @@ export function TestsScreen({ data }: { data: AppData }) {
             )}
           </div>
           {mistakes.length === 0 ? (
-            <EmptyState emoji="🧠" text="No mistakes logged" sub="Every logged error is one fewer surprise on exam day." />
+            <EmptyState text="No mistakes logged" sub="Every logged error is one fewer surprise on exam day." />
           ) : (
             <ul className="space-y-2">
               {mistakes.map((m) => {
@@ -270,7 +270,7 @@ function PrelimsPanel({ mocks }: { mocks: MockTestRecord[] }) {
     <>
       <SectionCard title="Prelims mock analytics" icon={<TrendingUp size={14} />} className="mb-3">
         {mocks.length === 0 ? (
-          <EmptyState emoji="🎯" text="No Prelims mocks yet" sub="Net score is correct × 2, minus ⅔ per incorrect (exact ⅓ of the 2 marks). Wrong answers are counted as attempted − correct." />
+          <EmptyState text="No Prelims mocks yet" sub="Net score is correct × 2, minus ⅔ per incorrect (exact ⅓ of the 2 marks). Wrong answers are counted as attempted − correct." />
         ) : (
           <>
             <div className="mb-1 grid grid-cols-2 gap-2 text-center">
@@ -308,7 +308,7 @@ function CsatPanel({ mocks }: { mocks: MockTestRecord[] }) {
     <>
       <SectionCard title="CSAT Paper II" icon={<TrendingUp size={14} />} className="mb-3">
         {mocks.length === 0 ? (
-          <EmptyState emoji="📐" text="No CSAT sets yet" sub="80 questions, +2.5 for a correct answer and −2.5/3 for a wrong one. 66.67 qualifies." />
+          <EmptyState text="No CSAT sets yet" sub="80 questions, +2.5 for a correct answer and −2.5/3 for a wrong one. 66.67 qualifies." />
         ) : (
           <>
             <div className="mb-1 grid grid-cols-2 gap-2 text-center">
@@ -376,7 +376,7 @@ function MainsPanel({ mocks }: { mocks: MockTestRecord[] }) {
   return (
     <SectionCard title="Mains test series" icon={<ClipboardList size={14} />}>
       {mocks.length === 0 ? (
-        <EmptyState emoji="📝" text="No Mains tests yet" sub="Record paper, marks obtained and mentor feedback tags to track improvement." />
+        <EmptyState text="No Mains tests yet" sub="Record paper, marks obtained and mentor feedback tags to track improvement." />
       ) : (
         <ul className="divide-y divide-line">
           {mocks.map((m) => (
@@ -401,7 +401,7 @@ function MainsPanel({ mocks }: { mocks: MockTestRecord[] }) {
                   </button>
                 </div>
               </div>
-              {m.subject !== 'Answer writing' && m.feedbackTags && <p className="mt-1 text-xs text-inksoft">🏷️ {m.feedbackTags}</p>}
+              {m.subject !== 'Answer writing' && m.feedbackTags && <p className="mt-1 text-xs text-inksoft">Tags: {m.feedbackTags}</p>}
               {m.notes && <p className="mt-1 text-xs text-inksoft">{m.notes}</p>}
             </li>
           ))}

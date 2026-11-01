@@ -1,0 +1,420 @@
+/* ─── Quiet Motion (docs/quiet-motion-prd.html) ────────────────────────────────
+   One motion system for every screen. Components never hard-code timing: they use
+   these tokens. <html data-motion> carries the tier (full | calm | off), set by
+   useMotionPreference. Only transform, opacity, stroke-dashoffset and colour animate. */
+
+:root {
+  --dur-instant: 90ms;
+  --dur-quick: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 440ms;
+  --dur-story: 900ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emph: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-sheet: cubic-bezier(0.32, 1.22, 0.5, 1);
+
+  /* Elevation: L0 tracks and pills, L1 cards, L2 one hero per screen, L3 sheets and toasts. */
+  --elev-1: 0 1px 2px rgb(var(--c-ink) / 0.05), 0 1px 1px rgb(var(--c-ink) / 0.03);
+  --elev-2: 0 1px 2px rgb(var(--c-ink) / 0.05), 0 8px 24px -6px rgb(var(--c-ink) / 0.14);
+  --elev-3: 0 2px 6px rgb(var(--c-ink) / 0.08), 0 24px 48px -12px rgb(var(--c-ink) / 0.3);
+}
+
+.elev-2 {
+  box-shadow: var(--elev-2);
+}
+.elev-3 {
+  box-shadow: var(--elev-3);
+}
+
+.font-display {
+  font-family: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Keyframes ─────────────────────────────────────────────────────────────── */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes sheet-out {
+  from { transform: translateY(var(--drag, 0px)); }
+  to { transform: translateY(110%); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop-in {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@keyframes check-draw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes seg-draw {
+  from { stroke-dashoffset: var(--seg-len); }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes ring-glow {
+  0%, 100% { opacity: 0; transform: scale(0.96); }
+  45% { opacity: 1; transform: scale(1.04); }
+}
+@keyframes feather-fall {
+  0% { opacity: 0; transform: translate3d(0, -12px, 0) rotate(0deg); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--sway, 18px), 260px, 0) rotate(var(--spin, 200deg)); }
+}
+@keyframes countdown {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes cell-in {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes flame-sway {
+  0%, 100% { transform: rotate(-4deg) scaleY(1); }
+  50% { transform: rotate(4deg) scaleY(1.06); }
+}
+@keyframes halo-breathe {
+  0%, 100% { transform: scale(0.82); opacity: 0.55; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes cue-in {
+  0%, 46% { opacity: 1; }
+  50%, 96% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes cue-out {
+  0%, 46% { opacity: 0; }
+  50%, 96% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes drift-a {
+  0%, 100% { transform: translate(-20%, -10%) scale(1); }
+  50% { transform: translate(25%, 20%) scale(1.2); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(20%, 15%) scale(1.1); }
+  50% { transform: translate(-25%, -20%) scale(0.9); }
+}
+
+/* Pip */
+@keyframes pip-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.012, 1.035); }
+}
+@keyframes pip-blink {
+  0%, 95.5%, 100% { transform: scaleY(1); }
+  97.5% { transform: scaleY(0.08); }
+}
+@keyframes pip-wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(24deg); }
+}
+@keyframes pip-flap {
+  from { transform: rotate(-6deg); }
+  to { transform: rotate(26deg); }
+}
+@keyframes pip-hop {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-14px); }
+  70% { transform: translateY(2px); }
+}
+@keyframes pip-z {
+  0% { opacity: 0; transform: translate(0, 6px); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(8px, -14px); }
+}
+@keyframes accessory-drop {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ─── Pip rig ──────────────────────────────────────────────────────────────── */
+.pip {
+  overflow: visible;
+}
+.pip .pip-body {
+  transform-box: view-box;
+  transform-origin: 100px 172px; /* feet, so Pip never floats off the ground */
+  animation: pip-breathe 3.6s ease-in-out infinite;
+}
+.pip .pip-eyes {
+  transform-box: view-box;
+  transform-origin: 100px 84px;
+  animation: pip-blink 4.8s infinite;
+}
+.pip .pip-wing {
+  transform-box: view-box;
+  transform-origin: 64px 126px;
+}
+.pip .pip-hop {
+  transform-box: view-box;
+}
+.pip-wave .pip-wing-r {
+  animation: pip-wave 1.4s ease-in-out infinite;
+}
+.pip-celebrate .pip-wing {
+  animation: pip-flap 0.26s ease-in-out 8 alternate;
+}
+.pip-celebrate .pip-hop {
+  animation: pip-hop 0.6s var(--ease-spring) 0.2s;
+}
+.pip-focus .pip-body,
+.pip-sleep .pip-body {
+  animation-duration: 8s;
+}
+.pip-focus .pip-eyes {
+  animation-duration: 7s;
+}
+.pip .pip-z {
+  animation: pip-z 3s ease-in-out infinite;
+}
+.pip .pip-accessory {
+  animation: accessory-drop 420ms var(--ease-spring) both;
+}
+
+/* ─── Shared building blocks ──────────────────────────────────────────────── */
+/* Staggered arrival. --i is the sibling index (cap at 4 so a sequence stays under 900ms). */
+.rise {
+  animation: rise-in var(--dur-slow) var(--ease-emph) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.press {
+  transition: transform var(--dur-instant) var(--ease-standard);
+}
+.press:active {
+  transform: scale(0.96);
+}
+
+.check-path {
+  stroke-dasharray: 24;
+  animation: check-draw var(--dur-base) var(--ease-emph) both;
+}
+.check-box-on {
+  animation: pop-in 320ms var(--ease-spring);
+}
+
+.ring-seg {
+  animation: seg-draw var(--dur-slow) var(--ease-emph) both;
+}
+.ring-glow {
+  animation: ring-glow 1.1s var(--ease-standard) 2 both;
+}
+
+.feather {
+  position: absolute;
+  top: 0;
+  width: 9px;
+  height: 22px;
+  border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+  animation: feather-fall var(--fall, 2.8s) var(--ease-standard) both;
+  pointer-events: none;
+}
+
+.skeleton {
+  border-radius: 1rem;
+  background: rgb(var(--c-surface2));
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.toast-countdown {
+  transform-origin: left center;
+  animation: countdown var(--toast-ms, 3500ms) linear both;
+}
+
+.hm-cell {
+  animation: cell-in 320ms var(--ease-emph) both;
+  animation-delay: calc(var(--d, 0) * 14ms);
+}
+
+.flame-sway {
+  transform-origin: 50% 90%;
+  animation: flame-sway 2.4s ease-in-out infinite;
+}
+
+/* Syllabus status chip: the new label rises in when the status changes. Plays per change, not per render. */
+.morph-in {
+  animation: rise-in var(--dur-base) var(--ease-emph) both;
+}
+
+/* Time-of-day wash behind the Home greeting, derived from the theme's brand-soft colour. */
+.tod-wash {
+  position: absolute;
+  inset: 0 -1rem auto;
+  height: 150px;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 2s var(--ease-standard);
+}
+.tod-dawn {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-brand-soft)) 70%, #f7b7c4) 0%, transparent 100%);
+}
+.tod-day {
+  background: linear-gradient(180deg, rgb(var(--c-brand-soft) / 0.9) 0%, transparent 100%);
+}
+.tod-dusk {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-brand-soft)) 60%, #f2a65a) 0%, transparent 100%);
+}
+.tod-night {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-brand-soft)) 55%, rgb(var(--c-accent))) 0%, transparent 100%);
+  opacity: 0.6;
+}
+
+/* Zen timer ambience */
+.zen-halo {
+  animation: halo-breathe 8s ease-in-out infinite;
+}
+.zen-cue-in {
+  animation: cue-in 8s ease-in-out infinite;
+}
+.zen-cue-out {
+  animation: cue-out 8s ease-in-out infinite;
+}
+.zen-drift-a {
+  animation: drift-a 46s ease-in-out infinite;
+}
+.zen-drift-b {
+  animation: drift-b 38s ease-in-out infinite;
+}
+.zen-paused .zen-halo,
+.zen-paused .zen-cue-in,
+.zen-paused .zen-cue-out,
+.zen-paused .zen-drift-a,
+.zen-paused .zen-drift-b,
+.zen-paused .pip * {
+  animation-play-state: paused;
+}
+
+.roll-digit {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+}
+.roll-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--dur-slow) var(--ease-emph);
+}
+
+/* Bottom sheet */
+.sheet-backdrop {
+  animation: fade-in var(--dur-base) var(--ease-standard) both;
+}
+.sheet-backdrop.closing {
+  animation: fade-out var(--dur-quick) var(--ease-exit) both;
+}
+.sheet-panel {
+  animation: sheet-in var(--dur-slow) var(--ease-sheet) both;
+}
+.sheet-panel.closing {
+  animation: sheet-out 200ms var(--ease-exit) both;
+}
+@media (min-width: 640px) {
+  .sheet-panel {
+    animation: rise-in var(--dur-base) var(--ease-emph) both;
+  }
+  .sheet-panel.closing {
+    animation: fade-out var(--dur-quick) var(--ease-exit) both;
+  }
+}
+
+.toast-panel {
+  animation: toast-in var(--dur-base) var(--ease-sheet) both;
+}
+
+/* Bottom nav: one pill slides between tabs. */
+.nav-pill {
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+
+/* ─── Screen transitions (View Transitions API) ────────────────────────────── */
+.bottom-nav {
+  view-transition-name: bottom-nav;
+}
+.timer-bar {
+  view-transition-name: timer-bar;
+}
+::view-transition-old(root) {
+  animation: var(--dur-quick) var(--ease-exit) both fade-out;
+}
+::view-transition-new(root) {
+  animation: 340ms var(--ease-emph) both rise-in;
+}
+html[data-motion='calm']::view-transition-new(root) {
+  animation-name: fade-in;
+}
+
+/* ─── Tiers ────────────────────────────────────────────────────────────────── */
+/* Calm: opacity, colour and progress fills only. No movement, loops, feathers or drift. */
+html[data-motion='calm'] .pip *,
+html[data-motion='calm'] .pip,
+html[data-motion='calm'] .feather,
+html[data-motion='calm'] .flame-sway,
+html[data-motion='calm'] .zen-halo,
+html[data-motion='calm'] .zen-drift-a,
+html[data-motion='calm'] .zen-drift-b,
+html[data-motion='calm'] .check-box-on,
+html[data-motion='calm'] .skeleton {
+  animation: none !important;
+}
+html[data-motion='calm'] .feather {
+  display: none;
+}
+html[data-motion='calm'] .rise,
+html[data-motion='calm'] .sheet-panel,
+html[data-motion='calm'] .toast-panel,
+html[data-motion='calm'] .morph-in,
+html[data-motion='calm'] .hm-cell {
+  animation-name: fade-in !important;
+}
+html[data-motion='calm'] .sheet-panel.closing {
+  animation-name: fade-out !important;
+}
+html[data-motion='calm'] .nav-pill,
+html[data-motion='calm'] .roll-strip {
+  transition-property: opacity;
+}
+
+/* Off: instant state changes. */
+html[data-motion='off'] *,
+html[data-motion='off'] *::before,
+html[data-motion='off'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+html[data-motion='off'] .feather {
+  display: none;
+}
+
+/* Battery: nothing runs while the app is hidden. */
+html[data-hidden] *,
+html[data-hidden] *::before,
+html[data-hidden] *::after {
+  animation-play-state: paused !important;
+}

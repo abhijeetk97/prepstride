@@ -1,0 +1,1439 @@
+<title>PrepStride Quiet Motion</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one 68ch reading column for prose; mockup sections break out to a phone + spec grid that stacks on phones. */
+:root {
+  --paper: #FBF9F5; --surface: #FFFFFF; --surface2: #F6F2EA; --ink: #2E2A26; --ink-soft: #776F65;
+  --line: #E8E2D6; --brand: #D8942E; --brand-rgb: 216 148 46; --brand-soft: #F7E2BB; --brand-text: #93600F;
+  --sky: #7EC8E3; --bezel: #2E2A26; --code-bg: #F3EEE4; --ok: #4E8D6E;
+  --zen-bg: #15161A; --zen-ink: #ECE8E1; --zen-soft: #9E988E; --zen-brand: #E8B75A;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ease-emph: cubic-bezier(.05, .7, .1, 1);
+  --ease-exit: cubic-bezier(.3, 0, .8, .15);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-sheet: cubic-bezier(.32, 1.22, .5, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #16171B; --surface: #1F2127; --surface2: #272A32; --ink: #ECE8E1; --ink-soft: #A39D93;
+    --line: #333740; --brand: #E8B75A; --brand-rgb: 232 183 90; --brand-soft: #524426; --brand-text: #E8B75A;
+    --sky: #8FD0EE; --bezel: #050608; --code-bg: #1C1E23; --ok: #7FBF9B; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #16171B; --surface: #1F2127; --surface2: #272A32; --ink: #ECE8E1; --ink-soft: #A39D93;
+  --line: #333740; --brand: #E8B75A; --brand-rgb: 232 183 90; --brand-soft: #524426; --brand-text: #E8B75A;
+  --sky: #8FD0EE; --bezel: #050608; --code-bg: #1C1E23; --ok: #7FBF9B; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink); font: 15px/1.6 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px; -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+main { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 72px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.4rem); font-weight: 800; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); font-weight: 700; }
+h3 { font-size: 1.2rem; font-weight: 700; }
+p { margin: 0; }
+section > * + * { margin-top: 16px; }
+.eyebrow { font: 600 12px/1.4 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--brand-text); }
+.lede { font-size: 1.15rem; color: var(--ink-soft); max-width: 60ch; }
+a { color: var(--brand-text); }
+code { font: 0.86em var(--f-mono); background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+pre.code { font: 12.5px/1.6 var(--f-mono); background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; margin: 0; }
+ul.list { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+ul.list li::marker { color: var(--brand); }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* ── Header ── */
+header.top { padding-top: 48px; display: grid; gap: 20px; max-width: 1040px; margin: 0 auto 72px; }
+.title-row { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+.title-row .pip-hero { width: 96px; height: 96px; flex: none; }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.meta div { background: var(--surface); padding: 12px 14px; min-width: 0; }
+.meta dt { font: 600 11px var(--f-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-soft); }
+.meta dd { margin: 2px 0 0; font-weight: 600; font-size: 14px; }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+.toc a { text-decoration: none; color: var(--ink); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.toc a:hover { border-color: var(--brand); }
+
+/* ── Tables ── */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 11px var(--f-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-soft); background: var(--surface2); }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+.sev { display: inline-block; font: 600 11px var(--f-mono); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.sev.hi { background: rgb(192 80 60 / .14); color: #B4462F; }
+.sev.md { background: rgb(var(--brand-rgb) / .18); color: var(--brand-text); }
+.sev.lo { background: var(--surface2); color: var(--ink-soft); }
+:root[data-theme="dark"] .sev.hi { color: #F09A84; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sev.hi { color: #F09A84; } }
+
+/* ── Principles ── */
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.principle { border-top: 3px solid var(--brand); padding-top: 12px; display: grid; gap: 6px; }
+.principle h3 { font-size: 1.05rem; }
+.principle p { color: var(--ink-soft); font-size: 14px; }
+
+/* ── Motion tier switch ── */
+.tierbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 0; background: var(--paper); border-bottom: 1px solid var(--line); }
+.tierbar p { font-size: 13px; color: var(--ink-soft); flex: 1 1 220px; min-width: 0; }
+.seg { display: inline-flex; background: var(--surface2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button { font: 600 13px var(--f-body); border: 0; background: transparent; color: var(--ink-soft); padding: 7px 14px; border-radius: 999px; cursor: pointer; min-height: 36px; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
+
+/* ── Mockup section ── */
+.mock { display: grid; grid-template-columns: 296px minmax(0, 1fr); gap: 40px; align-items: start; --m-dist: 1; --m-pop: .86; }
+.mock + .mock { margin-top: 64px; }
+.mock .spec { display: grid; gap: 14px; min-width: 0; }
+.mock .spec h3 { font-size: 1.45rem; }
+.mock .spec .num { font: 600 12px var(--f-mono); color: var(--brand-text); letter-spacing: .06em; }
+.mock .spec p { color: var(--ink-soft); }
+.mock dl.props { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px 16px; margin: 0; font-size: 14px; }
+.mock dl.props dt { font: 600 11px/1.9 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); }
+.mock dl.props dd { margin: 0; min-width: 0; }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.stage-ctrls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.btn { font: 600 13px var(--f-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 14px; border-radius: 999px; cursor: pointer; min-height: 38px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--brand); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.hint { font-size: 12px; color: var(--ink-soft); text-align: center; }
+@media (max-width: 780px) { .mock { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+
+/* ── Phone ── */
+.phone { width: 284px; max-width: 100%; height: 584px; border-radius: 40px; background: var(--bezel); padding: 9px; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .45), 0 0 0 1px rgb(255 255 255 / .04) inset; }
+.screen { position: relative; height: 100%; border-radius: 31px; overflow: hidden; background: var(--paper); color: var(--ink); font: 12.5px/1.45 var(--f-body); isolation: isolate; }
+.screen .pad { padding: 14px 14px 0; }
+.sbar { display: flex; justify-content: space-between; font: 600 11px var(--f-body); padding: 10px 20px 0; color: var(--ink); }
+.a-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.a-hero { background: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 88%, var(--brand-soft))); border: 1px solid color-mix(in srgb, var(--line) 60%, var(--brand)); border-radius: 20px; box-shadow: 0 10px 28px -16px rgb(var(--brand-rgb) / .55); }
+.a-eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+.a-h { font: 800 17px/1.15 var(--f-display); }
+.a-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 36px; border-radius: 11px; font: 700 11.5px var(--f-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.a-btn.primary { background: var(--brand); border-color: transparent; color: #fff; }
+:root[data-theme="dark"] .a-btn.primary { color: #1B1A17; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .a-btn.primary { color: #1B1A17; } }
+.a-btn:active { transform: scale(.96); }
+.dnum { font-family: var(--f-display); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── Shared keyframes (distances scale with --m-dist, pops with --m-pop) ── */
+@keyframes rise { from { opacity: 0; transform: translateY(calc(var(--m-dist) * 12px)); } }
+@keyframes popIn { from { opacity: 0; transform: scale(var(--m-pop)); } }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes draw { from { stroke-dashoffset: var(--len); } }
+.play .r1 { animation: rise .42s var(--ease-emph) both; animation-delay: var(--d, 0ms); }
+.play .p1 { animation: popIn .42s var(--ease-spring) both; animation-delay: var(--d, 0ms); }
+.play .f1 { animation: fadeIn .3s var(--ease-standard) both; animation-delay: var(--d, 0ms); }
+
+/* ── Pip rig ── */
+.pip { display: block; overflow: visible; }
+.pip .pip-body { transform-box: view-box; transform-origin: 60px 106px; }
+.pip .eyes { transform-box: fill-box; transform-origin: center; }
+.pip .wing-l { transform-box: view-box; transform-origin: 42px 66px; }
+.pip .wing-r { transform-box: view-box; transform-origin: 78px 66px; }
+.pip.loop .pip-body { animation: breathe 3.6s ease-in-out infinite; }
+.pip.loop .eyes { animation: blink 4.8s infinite; }
+.pip.slow .pip-body { animation-duration: 8s; }
+.pip.slow .eyes { animation-duration: 7s; }
+.pip.wave .wing-r { animation: waveR 1.4s ease-in-out infinite; }
+.pip.flap .wing-l { animation: flapL .26s ease-in-out 8 alternate; }
+.pip.flap .wing-r { animation: flapR .26s ease-in-out 8 alternate; }
+.pip.hop { animation: hop .6s var(--ease-spring); }
+@keyframes breathe { 50% { transform: scale(1.015, 1.035); } }
+@keyframes blink { 0%, 45%, 51%, 100% { transform: scaleY(1); } 48% { transform: scaleY(.08); } }
+@keyframes waveR { 0%, 100% { transform: rotate(0); } 25%, 75% { transform: rotate(-48deg); } 50% { transform: rotate(-28deg); } }
+@keyframes flapL { to { transform: rotate(34deg); } }
+@keyframes flapR { to { transform: rotate(-34deg); } }
+@keyframes hop { 40% { transform: translateY(calc(var(--m-dist) * -10px)); } }
+
+/* ── M1 Home ── */
+.tod { position: absolute; inset: 0 0 auto; height: 150px; background: linear-gradient(180deg, color-mix(in srgb, var(--brand-soft) 75%, transparent), transparent); z-index: -1; }
+.home-head { display: flex; align-items: center; gap: 10px; }
+.home-head > div { flex: 1; min-width: 0; }
+.dchip { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.ringbox { position: relative; width: 168px; height: 168px; margin: 0 auto; }
+.ringbox svg { width: 100%; height: 100%; }
+.ringbox .center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ringbox .center .dnum { font-size: 30px; line-height: 1; }
+.ringbox .center small { display: block; margin-top: 4px; font-size: 10.5px; font-weight: 600; color: var(--ink-soft); }
+.seg-arc { fill: none; stroke-linecap: round; }
+.play .seg-arc { animation: draw .55s var(--ease-emph) both; animation-delay: var(--d); }
+.legend { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: var(--surface2); }
+.legend i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.stat { background: var(--surface2); border-radius: 13px; padding: 8px 6px; text-align: center; display: grid; justify-items: center; gap: 1px; }
+.stat svg { width: 18px; height: 18px; }
+.stat b { font: 800 16px/1.1 var(--f-display); }
+.stat span { font-size: 8.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+/* "Today" (current build) look */
+.old .o-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / .05); }
+.old .o-pip { border-radius: 50%; background: radial-gradient(circle at 50% 40%, #fff, var(--surface2)); box-shadow: 0 0 0 2px rgb(255 255 255 / .7); display: grid; place-items: center; overflow: hidden; }
+.old .o-pill { background: var(--surface2); border-radius: 11px; padding: 6px 4px; text-align: center; }
+.old .o-pill b { font-size: 14px; display: block; }
+.old .o-pill span { font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--ink-soft); }
+
+/* ── M2 Goal met ── */
+.prog { fill: none; stroke: var(--brand); stroke-linecap: round; transition: stroke-dashoffset .75s var(--ease-emph); }
+.glow { fill: none; stroke: var(--brand); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.met .glow { animation: glowOut 1.1s var(--ease-standard) 2; }
+@keyframes glowOut { 0% { opacity: .55; transform: scale(1); stroke-width: 12; } 100% { opacity: 0; transform: scale(1.18); stroke-width: 2; } }
+.metmsg { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.metmsg .lbl-a, .metmsg .lbl-b { transition: opacity .3s var(--ease-standard), transform .3s var(--ease-emph); }
+.metmsg .stack { display: grid; flex: 1; min-width: 0; }
+.metmsg .stack > * { grid-area: 1 / 1; }
+.metmsg .lbl-b { opacity: 0; transform: translateY(calc(var(--m-dist) * 8px)); }
+.met .metmsg .lbl-a { opacity: 0; transform: translateY(calc(var(--m-dist) * -8px)); }
+.met .metmsg .lbl-b { opacity: 1; transform: none; }
+.feathers { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 3; }
+.feather { position: absolute; top: -24px; width: 9px; height: 20px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; opacity: 0; }
+.met .feather { animation: featherFall var(--t) var(--d) cubic-bezier(.35, .1, .55, 1) forwards; }
+@keyframes featherFall {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0); }
+  12% { opacity: .95; }
+  50% { transform: translate(calc(var(--sw) * 1px), 270px) rotate(var(--r)); }
+  100% { opacity: 0; transform: translate(calc(var(--sw) * -.4px), 600px) rotate(calc(var(--r) * -1)); }
+}
+
+/* ── M3 Rituals ── */
+.ritual { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 6px 10px; border: 0; background: transparent; color: var(--ink); font: 600 12px var(--f-body); text-align: left; border-radius: 12px; cursor: pointer; position: relative; }
+.ritual .box { width: 22px; height: 22px; flex: none; border-radius: 7px; border: 1.8px solid var(--line); display: grid; place-items: center; transition: background-color .16s var(--ease-standard), border-color .16s var(--ease-standard); }
+.ritual .box path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; transition: stroke-dashoffset .1s var(--ease-exit); }
+.ritual.on .box { background: var(--brand); border-color: var(--brand); }
+.ritual.on .box path { stroke-dashoffset: 0; transition: stroke-dashoffset .26s .07s var(--ease-emph); }
+.ritual .sub { margin-left: auto; font-size: 10.5px; color: var(--ink-soft); font-weight: 600; }
+.ritual.pop .box { animation: popIn .38s var(--ease-spring); }
+.ritual.flash { animation: flash .7s var(--ease-standard); }
+@keyframes flash { 0% { background: rgb(var(--brand-rgb) / .22); } 100% { background: transparent; } }
+.xp { position: absolute; right: 10px; top: 4px; font: 700 10px var(--f-body); color: var(--brand-text); background: var(--brand-soft); padding: 2px 7px; border-radius: 999px; opacity: 0; pointer-events: none; }
+.xp.float { animation: xpFloat 1s var(--ease-emph) forwards; }
+@keyframes xpFloat { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 25% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(calc(var(--m-dist) * -18px)); } }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 100%; height: 5px; border-radius: 3px; background: var(--surface2); transition: background-color .3s var(--ease-standard); }
+.dots i.on { background: var(--brand); }
+.roller { display: inline-flex; height: 1em; line-height: 1em; overflow: hidden; vertical-align: -0.12em; }
+.rcol { display: inline-block; height: 1em; overflow: hidden; }
+.rstrip { display: flex; flex-direction: column; transition: transform .38s var(--ease-emph); }
+.rstrip span { display: block; height: 1em; line-height: 1em; text-align: center; }
+
+/* ── M4 Nav ── */
+.navbar { position: absolute; inset: auto 0 0; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--line); padding: 6px 6px 16px; display: grid; grid-template-columns: repeat(5, 1fr); }
+.navbar .pill { position: absolute; top: 6px; left: 6px; width: calc((100% - 12px) / 5); height: 44px; border-radius: 14px; background: rgb(var(--brand-rgb) / .16); transition: transform .45s cubic-bezier(.34, 1.3, .64, 1); }
+.navbar button { position: relative; border: 0; background: transparent; display: grid; justify-items: center; gap: 2px; padding: 6px 0; min-height: 44px; font: 700 9px var(--f-body); color: var(--ink-soft); cursor: pointer; transition: color .2s; }
+.navbar button[aria-current="page"] { color: var(--brand-text); }
+.navbar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.navbar button.bounce svg { animation: iconBounce .45s var(--ease-spring); }
+@keyframes iconBounce { 0% { transform: scale(1); } 35% { transform: scale(.82); } 100% { transform: scale(1); } }
+.panel { position: absolute; inset: 34px 0 70px; padding: 4px 14px; display: flex; flex-direction: column; gap: 10px; }
+.panel.in-r { animation: slideInR .34s var(--ease-emph) both; }
+.panel.in-l { animation: slideInL .34s var(--ease-emph) both; }
+@keyframes slideInR { from { opacity: 0; transform: translateX(calc(var(--m-dist) * 28px)); } }
+@keyframes slideInL { from { opacity: 0; transform: translateX(calc(var(--m-dist) * -28px)); } }
+.ph-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-weight: 600; }
+.ph-row small { color: var(--ink-soft); font-weight: 600; }
+.bar { height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 3px; background: var(--brand); }
+
+/* ── M5 Sheet ── */
+.tsrow-wrap { display: grid; grid-template-rows: 1fr; }
+.tsrow-wrap > div { overflow: hidden; min-height: 0; }
+.tsrow-wrap.new { animation: growRow .42s var(--ease-emph) both; }
+.tsrow-wrap.new .tsrow { animation: flash 1.4s .25s var(--ease-standard) both; }
+.tsrow-wrap.gone { grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .28s var(--ease-standard), opacity .2s; }
+@keyframes growRow { from { grid-template-rows: 0fr; opacity: 0; } }
+.tsrow { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-weight: 600; border-radius: 10px; }
+.tsrow i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.tsrow b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.tsrow .del { border: 0; background: transparent; color: var(--ink-soft); width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; cursor: pointer; }
+.tsrow .del svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.backdrop { position: absolute; inset: 0; background: rgb(20 18 15 / .38); backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity .24s var(--ease-standard); z-index: 4; }
+.sheet { position: absolute; inset: auto 0 0; background: var(--paper); border-radius: 22px 22px 0 0; padding: 8px 14px 18px; transform: translateY(105%); transition: transform .26s var(--ease-exit); z-index: 5; display: grid; gap: 10px; box-shadow: 0 -12px 30px -12px rgb(0 0 0 / .3); }
+.open .backdrop { opacity: 1; pointer-events: auto; }
+.open .sheet { transform: none; transition: transform .48s var(--ease-sheet); }
+.handle { width: 38px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1.5px solid color-mix(in srgb, var(--c) 55%, var(--line)); background: var(--surface2); color: var(--ink); font: 700 11px var(--f-body); min-height: 34px; padding: 0 12px; border-radius: 999px; cursor: pointer; transition: background-color .18s var(--ease-standard), color .18s, border-color .18s; }
+.chip.sel { background: var(--c); border-color: var(--c); color: #fff; animation: popIn .32s var(--ease-spring); }
+.durs { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--surface2); border-radius: 12px; padding: 3px; }
+.durs .ind { position: absolute; top: 3px; bottom: 3px; left: 0; border-radius: 9px; background: var(--surface); box-shadow: 0 1px 4px rgb(0 0 0 / .14); transition: transform .38s cubic-bezier(.34, 1.25, .64, 1), width .38s; }
+.durs button { position: relative; border: 0; background: transparent; font: 700 11px var(--f-body); color: var(--ink-soft); min-height: 34px; cursor: pointer; transition: color .2s; }
+.durs button.sel { color: var(--ink); }
+.save { position: relative; overflow: hidden; }
+.save .t1, .save .t2 { transition: opacity .2s, transform .3s var(--ease-emph); }
+.save .t2 { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transform: translateY(10px); }
+.save.done .t1 { opacity: 0; transform: translateY(-10px); }
+.save.done .t2 { opacity: 1; transform: none; }
+
+/* ── M6 Zen ── */
+.zen { background: var(--zen-bg); color: var(--zen-ink); }
+.zen .ambient { position: absolute; width: 220px; height: 220px; border-radius: 50%; filter: blur(50px); opacity: .32; z-index: -1; }
+.zen .a1 { background: #E8B75A; top: 40px; left: -60px; animation: drift1 38s ease-in-out infinite alternate; }
+.zen .a2 { background: #6FA9C9; bottom: 60px; right: -70px; animation: drift2 46s ease-in-out infinite alternate; }
+@keyframes drift1 { to { transform: translate(90px, 140px) scale(1.2); } }
+@keyframes drift2 { to { transform: translate(-80px, -120px) scale(.85); } }
+.zen-top { display: flex; justify-content: space-between; align-items: center; padding: 14px; }
+.zen-pill { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgb(255 255 255 / .08); color: var(--zen-soft); }
+.halo-wrap { position: relative; width: 190px; height: 190px; margin: 6px auto 0; display: grid; place-items: center; }
+.halo-wrap svg.arc { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.halo { position: absolute; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgb(232 183 90 / .38), rgb(232 183 90 / 0) 70%); animation: breatheHalo 8s ease-in-out infinite; }
+@keyframes breatheHalo { 0%, 100% { transform: scale(.92); opacity: .7; } 50% { transform: scale(1.22); opacity: 1; } }
+.cue { position: relative; height: 18px; text-align: center; font-size: 11px; color: var(--zen-soft); margin-top: 4px; }
+.cue span { position: absolute; inset: 0; animation: cue 8s ease-in-out infinite; }
+.cue span + span { animation-delay: -4s; }
+@keyframes cue { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+.clock { font: 800 52px/1 var(--f-display); text-align: center; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; margin-top: 10px; }
+.clock .colon { display: inline-block; width: .32em; text-align: center; opacity: .6; }
+.zen-ctrls { position: absolute; inset: auto 0 26px; display: flex; justify-content: center; gap: 16px; }
+.zbtn { width: 48px; height: 48px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; }
+.zbtn svg { width: 18px; height: 18px; }
+.zbtn.main { background: var(--zen-brand); color: #1B1A17; }
+.zbtn.alt { background: rgb(255 255 255 / .1); color: var(--zen-ink); }
+.zen.paused .halo, .zen.paused .pip *, .zen.paused .cue span, .zen.paused .ambient { animation-play-state: paused; }
+
+/* ── M7 Streak ── */
+.flame-box { height: 74px; display: grid; place-items: end center; }
+.flame { width: 46px; height: 60px; transform-origin: 50% 100%; transition: transform .5s var(--ease-spring), filter .5s; }
+.flame .sway { transform-box: view-box; transform-origin: 20px 52px; animation: sway 2.4s ease-in-out infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(-3deg) scaleY(1); } 50% { transform: rotate(3deg) scaleY(1.05); } }
+[data-tier="0"] .flame { transform: scale(.72); filter: grayscale(1) opacity(.45); }
+[data-tier="1"] .flame { transform: scale(.78); }
+[data-tier="2"] .flame { transform: scale(.95); }
+[data-tier="3"] .flame { transform: scale(1.14); filter: drop-shadow(0 0 10px rgb(var(--brand-rgb) / .65)); }
+.shield-box { position: relative; height: 74px; display: grid; place-items: end center; }
+.shield-svg { width: 52px; height: 60px; }
+.shield-fill { transition: y .6s var(--ease-emph), height .6s var(--ease-emph); }
+.shield-box.earned .shield-svg { animation: popIn .5s var(--ease-spring); }
+.spark { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--brand); opacity: 0; top: 30px; left: 50%; }
+.earned .spark { animation: spark .7s var(--ease-emph) both; }
+@keyframes spark { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(calc(-50% + var(--x) * var(--m-dist)), calc(var(--y) * var(--m-dist))) scale(.4); } }
+.tile2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile2 .a-card { padding: 10px; text-align: center; display: grid; gap: 4px; }
+.tile2 .big { font: 800 26px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+
+/* ── M8 Heatmap ── */
+.hm { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 11px); gap: 3px; justify-content: center; }
+.hm button { width: 11px; height: 11px; border-radius: 3px; border: 0; padding: 0; cursor: pointer; background: var(--surface2); position: relative; }
+.hm button[data-l="1"] { background: rgb(var(--brand-rgb) / .28); }
+.hm button[data-l="2"] { background: rgb(var(--brand-rgb) / .5); }
+.hm button[data-l="3"] { background: rgb(var(--brand-rgb) / .75); }
+.hm button[data-l="4"] { background: rgb(var(--brand-rgb) / 1); }
+.play .hm button { animation: popIn .36s var(--ease-spring) both; animation-delay: calc(var(--w) * 18ms + var(--r) * 18ms); }
+.hm button.today::after { content: ""; position: absolute; inset: -3px; border-radius: 5px; border: 1.5px solid var(--brand); animation: pulseRing 2s ease-out infinite; }
+.hm button.picked { outline: 2px solid var(--ink); outline-offset: 1px; }
+@keyframes pulseRing { 0% { opacity: .9; transform: scale(.8); } 100% { opacity: 0; transform: scale(1.5); } }
+.months { display: flex; font-size: 9px; color: var(--ink-soft); font-weight: 600; padding-left: 2px; }
+.tip { min-height: 34px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; text-align: center; }
+.tip span { animation: fadeIn .2s; }
+.lg { display: flex; align-items: center; gap: 3px; justify-content: flex-end; font-size: 9px; color: var(--ink-soft); }
+.lg i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+/* ── M9 Syllabus ── */
+.topic { padding: 10px 12px; display: grid; gap: 7px; }
+.topic-top { display: flex; align-items: center; gap: 8px; }
+.topic-top p { flex: 1; min-width: 0; font-weight: 600; font-size: 11.5px; line-height: 1.3; }
+.schip { --c: #B8B2A7; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 18%, var(--surface)); color: var(--ink); font: 700 10px var(--f-body); border-radius: 999px; min-height: 30px; padding: 0 10px 0 8px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; overflow: hidden; transition: background-color .24s var(--ease-standard), border-color .24s var(--ease-standard); flex: none; }
+.schip i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); transition: background-color .24s; }
+.schip span { display: inline-block; }
+.schip span.swap { animation: labelIn .32s var(--ease-emph); }
+@keyframes labelIn { from { opacity: 0; transform: translateY(calc(var(--m-dist) * 9px)); } }
+.steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.steps i { height: 4px; border-radius: 2px; background: var(--surface2); transition: background-color .3s var(--ease-standard); transition-delay: calc(var(--i) * 30ms); }
+
+/* ── M10 Toast ── */
+.toast { position: absolute; left: 12px; right: 12px; bottom: 22px; background: var(--ink); color: var(--paper); border-radius: 14px; padding: 10px 12px 12px; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 11.5px; transform: translateY(140%); opacity: 0; transition: transform .26s var(--ease-exit), opacity .2s; overflow: hidden; z-index: 4; }
+.toast.show { transform: none; opacity: 1; transition: transform .42s var(--ease-sheet), opacity .2s; }
+.toast button { margin-left: auto; border: 0; background: transparent; color: var(--brand); font: 800 12px var(--f-body); min-height: 32px; padding: 0 6px; cursor: pointer; }
+.toast .cd { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--brand); transform-origin: left; }
+.toast.show .cd { animation: countdown 5s linear forwards; }
+@keyframes countdown { to { transform: scaleX(0); } }
+
+/* ── Visual refresh specimens ── */
+.spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.specimen { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.specimen h3 { font-size: 1rem; }
+.specimen p { font-size: 13.5px; color: var(--ink-soft); }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+.compare div { display: grid; gap: 4px; }
+.compare small { font: 600 10px var(--f-mono); text-transform: uppercase; color: var(--ink-soft); letter-spacing: .06em; }
+.elev { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.elev div { height: 56px; border-radius: 12px; display: grid; place-items: end start; padding: 6px 8px; font: 600 10px var(--f-mono); color: var(--ink-soft); }
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.swatches span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px 3px 4px; border-radius: 999px; background: var(--surface2); }
+.swatches i { width: 14px; height: 14px; border-radius: 50%; }
+.tods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.tods div { height: 64px; border-radius: 12px; border: 1px solid var(--line); display: grid; place-items: end center; padding-bottom: 6px; font: 600 10px var(--f-mono); color: #2E2A26; }
+.icons-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.icons-row svg { width: 26px; height: 26px; }
+.mermaid { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; overflow-x: auto; margin: 0; }
+
+/* ── Motion tiers applied to every mockup ── */
+[data-motion="calm"] .mock { --m-dist: 0; --m-pop: 1; }
+[data-motion="calm"] .pip *, [data-motion="calm"] .pip, [data-motion="calm"] .ambient, [data-motion="calm"] .halo, [data-motion="calm"] .flame .sway, [data-motion="calm"] .hm button.today::after { animation: none !important; }
+[data-motion="calm"] .feather, [data-motion="calm"] .spark { display: none; }
+[data-motion="off"] .mock *, [data-motion="off"] .mock *::before, [data-motion="off"] .mock *::after, [data-motion="off"] .pip-hero * {
+  animation-duration: 0s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
+  transition-duration: 0s !important; transition-delay: 0s !important;
+}
+[data-motion="off"] .feather, [data-motion="off"] .spark, [data-motion="off"] .ambient { display: none; }
+[data-motion="off"] .toast.show .cd { animation: none !important; }
+</style>
+
+<header class="top">
+  <p class="eyebrow">Product requirements · Draft v0.1 · 1 November 2026</p>
+  <div class="title-row">
+    <div id="heroPip" class="pip-hero"></div>
+    <div style="min-width:0;flex:1 1 320px">
+      <h1>Quiet Motion</h1>
+      <p class="lede">An animation and visual refresh for PrepStride. Pip comes alive, numbers arrive with weight, and the app keeps the calm a long study day needs.</p>
+    </div>
+  </div>
+  <dl class="meta">
+    <div><dt>Product</dt><dd>PrepStride PWA</dd></div>
+    <div><dt>Status</dt><dd>Draft for review</dd></div>
+    <div><dt>Builds on</dt><dd><code>PRD.md</code> modules 1, 9, 10, 12</dd></div>
+    <div><dt>Guardrails</dt><dd><code>openspec/project.md</code></dd></div>
+    <div><dt>Ships as</dt><dd>8 OpenSpec changes, p1 to p2</dd></div>
+  </dl>
+  <nav class="toc" aria-label="Contents">
+    <a href="#audit">Current state</a><a href="#goals">Goals</a><a href="#principles">Principles</a><a href="#system">Motion system</a><a href="#mockups">Mockups</a><a href="#pip">Pip rig</a><a href="#visual">Visual refresh</a><a href="#tech">Implementation</a><a href="#budgets">Budgets</a><a href="#rollout">Rollout</a><a href="#questions">Open questions</a>
+  </nav>
+</header>
+
+<main>
+
+<section id="audit">
+  <p class="eyebrow">01 · Where the app is today</p>
+  <h2>Solid core, flat surface</h2>
+  <div class="prose"><p>All 15 OpenSpec changes are complete. Typecheck, the production build and all 31 unit tests pass. The numbers are now trustworthy, which was the right thing to fix first. The surface has not caught up yet. These notes come from the live build at 375px and from the source.</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Observation</th><th>Where</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr><td>Pip's moods are emoji stickers (🎉 😴 🤓) placed on a circle-cropped PNG. The bird never changes pose.</td><td><code>components/mascot/Pip.tsx</code></td><td><span class="sev hi">High</span></td></tr>
+      <tr><td>Home shows Pip twice once a session is logged (header and ring), and three times on first run.</td><td><code>DashboardScreen.tsx</code></td><td><span class="sev md">Medium</span></td></tr>
+      <tr><td>Confetti fires again on every ritual tap after the daily goal is met. This works against the "no more confetti" non-goal.</td><td><code>DashboardScreen.tsx</code> · <code>toggleRitual</code></td><td><span class="sev hi">High</span></td></tr>
+      <tr><td>No <code>prefers-reduced-motion</code> handling anywhere. The float, wiggle and confetti loops always run.</td><td><code>index.css</code>, <code>tailwind.config.js</code></td><td><span class="sev hi">High</span></td></tr>
+      <tr><td>Every card has the same radius, border and shadow, so the hero ring card has the same weight as the daily-target chips.</td><td><code>.card</code> in <code>index.css</code></td><td><span class="sev md">Medium</span></td></tr>
+      <tr><td>Screens swap instantly. The bottom-nav active state is a colour change only. Modals animate in but vanish on close.</td><td><code>App.tsx</code>, <code>BottomNav.tsx</code>, <code>Modal</code></td><td><span class="sev md">Medium</span></td></tr>
+      <tr><td>UI icons are emoji (🎯 🔥 🛡 🐣), which render differently on iOS and Android and clash with the Lucide line icons.</td><td>Stat pills, headers, rewards</td><td><span class="sev md">Medium</span></td></tr>
+      <tr><td>Inter is declared but never loaded, so phones fall back to the system font. Hero numbers have no typographic character.</td><td><code>tailwind.config.js</code>, <code>index.html</code></td><td><span class="sev lo">Low</span></td></tr>
+      <tr><td>The ring is one colour. The day's subject mix, already in the data, is only visible further down in the timesheet list.</td><td><code>ProgressRing</code></td><td><span class="sev lo">Low</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="goals">
+  <p class="eyebrow">02 · Goals and non-goals</p>
+  <h2>Make effort feel seen, without adding noise</h2>
+  <div class="spec-grid">
+    <div class="specimen">
+      <h3>Goals</h3>
+      <ul class="list">
+        <li>Every state change on a primary flow (log, tick, start, save, delete) gets a short, readable transition.</li>
+        <li>Pip becomes a vector character with real poses that respond to the timer, the goal and rest days.</li>
+        <li>The home screen reads at a glance: today's hours, the subject mix and the streak, in that order.</li>
+        <li>One motion system (tokens, three tiers) that every screen uses.</li>
+        <li>Visual hierarchy through type, elevation and the subject colours already in <code>SUBJECT_META</code>.</li>
+      </ul>
+    </div>
+    <div class="specimen">
+      <h3>Non-goals</h3>
+      <ul class="list">
+        <li>No new ranks, badges, cosmetics or XP mechanics. Pip's accessories stay tied to the existing seven ranks.</li>
+        <li>No confetti. The single daily celebration replaces it.</li>
+        <li>No sound by default and no push notifications.</li>
+        <li>No animation that makes an action slower. The 3-second logging rule from <code>PRD.md</code> holds.</li>
+        <li>No desktop redesign. Phone-first at 390px stays the target.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="principles">
+  <p class="eyebrow">03 · Principles</p>
+  <h2>Four rules every animation must pass</h2>
+  <div class="principles">
+    <div class="principle"><h3>Motion explains state</h3><p>An animation shows where something came from or went to: a session flying into the timesheet, a ring closing. If it explains nothing, cut it.</p></div>
+    <div class="principle"><h3>Celebrate effort, quietly</h3><p>One celebration a day, when the target is truly met. Small acknowledgements (a check drawing in, +10 XP drifting up) cover everything else.</p></div>
+    <div class="principle"><h3>Numbers land exactly</h3><p>Count-ups always finish on the true value, and screen readers only hear the final number. Animation never shows progress that isn't in the data.</p></div>
+    <div class="principle"><h3>Calm by default, kind to batteries</h3><p>Loops are slow and few, pause when the app is hidden, and stop under reduced motion. The zen timer is the only screen with ambient motion.</p></div>
+  </div>
+</section>
+
+<section id="system">
+  <p class="eyebrow">04 · Motion system</p>
+  <h2>Tokens, choreography and three tiers</h2>
+  <div class="prose"><p>Durations and curves live as CSS custom properties and Tailwind theme keys, so components never hard-code timing. The current <code>pop</code> and <code>slide-up</code> curves carry over as the spring and sheet curves.</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Token</th><th>Value</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><code>--dur-instant</code></td><td>90 ms</td><td>Press feedback (scale .96), colour on tap</td></tr>
+      <tr><td><code>--dur-quick</code></td><td>160 ms</td><td>Chips, checkboxes, toggles, exits</td></tr>
+      <tr><td><code>--dur-base</code></td><td>240 ms</td><td>Screen fades, toasts, label swaps</td></tr>
+      <tr><td><code>--dur-slow</code></td><td>420 to 480 ms</td><td>Sheets, ring segments, nav pill</td></tr>
+      <tr><td><code>--dur-story</code></td><td>900 ms</td><td>Count-ups and the full home arrival sequence (cap)</td></tr>
+      <tr><td><code>--dur-ambient</code></td><td>3.6 s to 46 s</td><td>Pip breathing, zen halo, ambient drift</td></tr>
+      <tr><td><code>--ease-standard</code></td><td><code>cubic-bezier(.2,0,0,1)</code></td><td>Colour, opacity, small moves</td></tr>
+      <tr><td><code>--ease-emph</code></td><td><code>cubic-bezier(.05,.7,.1,1)</code></td><td>Elements arriving: rings, rows, panels</td></tr>
+      <tr><td><code>--ease-exit</code></td><td><code>cubic-bezier(.3,0,.8,.15)</code></td><td>Elements leaving; always faster than the entry</td></tr>
+      <tr><td><code>--ease-spring</code></td><td><code>cubic-bezier(.34,1.56,.64,1)</code></td><td>Pops: checkbox, chip select, shield earned</td></tr>
+      <tr><td><code>--ease-sheet</code></td><td><code>cubic-bezier(.32,1.22,.5,1)</code></td><td>Bottom sheets and toasts (slight overshoot)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose"><p><strong>Choreography.</strong> Stagger siblings by 50 to 70 ms, never more than five items, and keep any sequence under 900 ms. Exits take about 60% of the entry time. Every animation can be interrupted, and a second tap always wins over a running transition.</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Tier</th><th>When</th><th>What runs</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Full</strong></td><td>Default</td><td>Everything in this document.</td></tr>
+      <tr><td><strong>Calm</strong></td><td>OS reduced motion is on, or chosen in Settings</td><td>Opacity, colour and progress fills only. No movement, scaling, loops, feathers or ambient drift. Count-ups still run.</td></tr>
+      <tr><td><strong>Off</strong></td><td>Chosen in Settings</td><td>Instant state changes. Numbers show their final value immediately.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="mockups">
+  <p class="eyebrow">05 · Interactive mockups</p>
+  <h2>Ten moments, built to spec</h2>
+  <div class="prose"><p>Each phone below is live. Mockups replay when they scroll into view, and most respond to taps. Switch the motion tier to check how each one degrades. Hours, streaks and dates are example data.</p></div>
+
+  <div class="tierbar" role="group" aria-label="Motion tier">
+    <div class="seg" id="tierSeg">
+      <button type="button" data-tier="full" aria-pressed="true">Full</button>
+      <button type="button" data-tier="calm" aria-pressed="false">Calm</button>
+      <button type="button" data-tier="off" aria-pressed="false">Off</button>
+    </div>
+    <p>Applies to every mockup on this page. Calm starts selected if your device asks for reduced motion.</p>
+  </div>
+
+  <!-- M1 -->
+  <div class="mock" data-demo="home" style="margin-top:40px">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="homeScreen"></div></div>
+      <div class="stage-ctrls">
+        <div class="seg" id="homeVer"><button type="button" data-v="old" aria-pressed="false">Today</button><button type="button" data-v="new" aria-pressed="true">Proposed</button></div>
+        <button type="button" class="btn replay">↻ Replay</button>
+      </div>
+    </div>
+    <div class="spec">
+      <p class="num">M1 · HOME</p>
+      <h3>Home arrival</h3>
+      <p>The ring draws one subject at a time while the total counts up to the exact logged minutes. Stats follow in a short stagger. Pip appears once, in the header, breathing and blinking.</p>
+      <dl class="props">
+        <dt>Trigger</dt><dd>First Home render of the day, or returning to Home after 30 minutes away. Plain tab switches skip the sequence.</dd>
+        <dt>Sequence</dt><dd>Header fade (0 ms) → ring segments, 550 ms each, starts staggered by subject share → count-up 900 ms, ease-out cubic → legend and stats at 60 ms stagger from 600 ms.</dd>
+        <dt>Visual</dt><dd>The ring is split by subject in <code>SUBJECT_META</code> colours. The hero card gets elevation level 2. A time-of-day tint sits behind the header. Emoji stat icons become drawn icons.</dd>
+        <dt>Calm / Off</dt><dd>Calm: segments fill in place and numbers count without movement. Off: final state at once.</dd>
+        <dt>Done when</dt><dd>The count-up ends on the same value as <code>formatMinutes(todayMinutes)</code>. The aria label carries the final value from the first frame. No layout shift during the sequence.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M2 -->
+  <div class="mock" data-demo="goal">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="goalScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Replay</button></div>
+    </div>
+    <div class="spec">
+      <p class="num">M2 · CELEBRATION</p>
+      <h3>Target met, once a day</h3>
+      <p>Replaces <code>ConfettiBurst</code>. The ring closes, pulses twice, and Pip flaps and hops while a few feathers in Pip's wing colours drift down. The message swaps from "10m to go" to "Target met".</p>
+      <dl class="props">
+        <dt>Trigger</dt><dd>The day's total first reaches the target. Fires once per local day, using the existing <code>celebrated_&lt;date&gt;</code> key. Ritual taps never re-trigger it.</dd>
+        <dt>Timing</dt><dd>Ring close 750 ms → glow 2 × 1.1 s → Pip flap 8 × 260 ms plus hop → 12 feathers, 2.4 to 3.4 s each. Done by 4 s, and taps work throughout.</dd>
+        <dt>Haptics</dt><dd>One 12 ms <code>navigator.vibrate</code> pulse where supported (Android Chrome). iOS Safari has no vibrate API and gets none.</dd>
+        <dt>Calm / Off</dt><dd>Calm: ring fill and message swap only, no feathers or flapping. Off: message only.</dd>
+        <dt>Done when</dt><dd><code>ConfettiBurst</code> is deleted. A test proves a second ritual toggle after the goal does not celebrate.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M3 -->
+  <div class="mock" data-demo="rituals">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="ritScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Replay</button></div>
+      <p class="hint">Tap the rituals.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M3 · MICRO-INTERACTION</p>
+      <h3>Ritual check</h3>
+      <p>The box fills and pops, the check mark draws in, and the row flashes softly. A "+10 XP" chip drifts up and fades, and the counter rolls to the new number. Unticking reverses quickly and quietly, with no negative XP shown.</p>
+      <dl class="props">
+        <dt>Timing</dt><dd>Fill 160 ms · pop 380 ms spring · check stroke 260 ms (70 ms delay) · XP chip 1 s · counter roll 380 ms.</dd>
+        <dt>Rules</dt><dd>The XP chip shows the real XP from <code>gamification.ts</code>, or nothing when a ritual earns none. The tap target stays 44 px.</dd>
+        <dt>Calm / Off</dt><dd>Calm: fill and check only. Off: instant.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M4 -->
+  <div class="mock" data-demo="nav">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="navScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Replay</button></div>
+      <p class="hint">Tap the tabs.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M4 · NAVIGATION</p>
+      <h3>Tab bar and screen transitions</h3>
+      <p>A soft pill slides under the active tab with a little spring, and the icon dips briefly. The new screen slides in 28 px from the direction of travel while the old one fades out. The tab bar stays still.</p>
+      <dl class="props">
+        <dt>Build</dt><dd>View Transitions API around <code>navigate()</code> in <code>App.tsx</code>, with <code>view-transition-name: nav</code> on the bar so it never moves. Falls back to an instant swap where unsupported.</dd>
+        <dt>Timing</dt><dd>Pill 450 ms · icon 450 ms · panel in 340 ms · panel out 160 ms.</dd>
+        <dt>Extras</dt><dd>Scroll resets to top on browser back too, which <code>hashchange</code> does not do today.</dd>
+        <dt>Calm / Off</dt><dd>Calm: crossfade only. Off: instant.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M5 -->
+  <div class="mock" data-demo="sheet">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="sheetScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Auto demo</button></div>
+      <p class="hint">Tap Quick log, pick a subject and duration, then save.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M5 · BOTTOM SHEET</p>
+      <h3>Quick log, with a save you can see</h3>
+      <p>The sheet springs up over a blurred backdrop. The selected subject chip fills with its colour. A highlight slides between duration options instead of jumping. Save turns into a check, the sheet drops away, and the new session grows into the timesheet with a short highlight.</p>
+      <dl class="props">
+        <dt>Timing</dt><dd>Sheet in 480 ms (sheet curve) / out 260 ms · chip pop 320 ms · duration highlight 380 ms · row grow 420 ms then highlight fade 1.4 s · total count-up 600 ms.</dd>
+        <dt>Gesture</dt><dd>Drag down on the handle to dismiss, with velocity above 0.5 px/ms or distance above 30%. Every modal gets an exit animation; today <code>Modal</code> returns null immediately.</dd>
+        <dt>3-second rule</dt><dd>Controls accept taps from the first frame of the sheet animation. Saving never waits for the exit.</dd>
+        <dt>Calm / Off</dt><dd>Calm: fade in and out, row appears with highlight only. Off: instant.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M6 -->
+  <div class="mock" data-demo="zen">
+    <div class="stage">
+      <div class="phone"><div class="screen zen" id="zenScreen"></div></div>
+      <p class="hint">Pause freezes every loop on the screen.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M6 · ZEN TIMER</p>
+      <h3>A screen you can breathe with</h3>
+      <p>A warm halo behind Pip expands for 4 seconds and contracts for 4. A cue fades between "Breathe in" and "Breathe out". An arc traces the Pomodoro. Digits roll instead of flicking, and two blurred colour fields drift slowly across the background. Pip wears spectacles and blinks slowly.</p>
+      <dl class="props">
+        <dt>Battery</dt><dd>CSS-only loops on <code>transform</code> and <code>opacity</code>. Everything pauses on <code>visibilitychange</code>, and the arc updates once per second rather than per frame. A Screen Wake Lock is requested while zen is open, with rejection handled.</dd>
+        <dt>Break phase</dt><dd>Pip switches to the sleep pose, the halo cools to sky blue, and the cue changes to "Rest your eyes".</dd>
+        <dt>Calm / Off</dt><dd>No halo, drift or blinking. The arc and digits still update without rolling.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M7 -->
+  <div class="mock" data-demo="streak">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="streakScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Replay</button></div>
+      <p class="hint">Log target-met days to grow the flame and fill a shield.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M7 · STREAK AND SHIELDS</p>
+      <h3>A flame that grows, a shield that fills</h3>
+      <p>The streak flame sways gently and steps up in size at 3 and 7 days, with a glow from 7. The next Streak Shield fills from the bottom as target-met days accrue. At 7 it pops, sparks, and the count goes up.</p>
+      <dl class="props">
+        <dt>Tiers</dt><dd>0 days: grey outline with "Start today" (no shame copy) · 1 to 2: small · 3 to 6: medium · 7 and up: large with glow.</dd>
+        <dt>Rules</dt><dd>Fill level is exactly <code>progress / 7</code>, read from the same streak logic as <code>useAppData</code>. Shields stay capped at 3.</dd>
+        <dt>Calm / Off</dt><dd>Calm: size and fill change without spring or sway, no sparks. Off: instant.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M8 -->
+  <div class="mock" data-demo="heat">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="heatScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Replay</button></div>
+      <p class="hint">Tap a day.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M8 · ANALYTICS</p>
+      <h3>Heatmap reveal</h3>
+      <p>Cells pop in along a diagonal wave from the oldest week to today, and today carries a soft pulse ring. Tapping a day shows its date and exact hours in a fixed slot above the grid, so nothing jumps.</p>
+      <dl class="props">
+        <dt>Timing</dt><dd>Delay = (week + weekday) × 18 ms. A 52-week grid caps the wave at 900 ms by raising the delay floor and shortening the step.</dd>
+        <dt>Trigger</dt><dd>First time the heatmap enters the viewport, via IntersectionObserver. It doesn't replay on every visit.</dd>
+        <dt>Calm / Off</dt><dd>Calm: cells fade in together. Off: static.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M9 -->
+  <div class="mock" data-demo="syl">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="sylScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Replay</button></div>
+      <p class="hint">Tap a status chip to advance it.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M9 · SYLLABUS</p>
+      <h3>Topic status that morphs</h3>
+      <p>The chip blends to the next status colour from <code>STATUS_META</code>, and the new label rises in. A seven-step track under each topic fills left to right with a 30 ms ripple, so progress through the revision cycle is visible without reading.</p>
+      <dl class="props">
+        <dt>Timing</dt><dd>Colour 240 ms · label 320 ms · step ripple 30 ms per step.</dd>
+        <dt>Rules</dt><dd>Cycling stays one tap, matching the current Syllabus behaviour. Revision due dates are recalculated by <code>revision.ts</code> as today; the animation only reflects them.</dd>
+        <dt>Calm / Off</dt><dd>Calm: colour and fill only. Off: instant.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- M10 -->
+  <div class="mock" data-demo="undo">
+    <div class="stage">
+      <div class="phone"><div class="screen" id="undoScreen"></div></div>
+      <div class="stage-ctrls"><button type="button" class="btn replay">↻ Replay</button></div>
+      <p class="hint">Delete a session, then undo it.</p>
+    </div>
+    <div class="spec">
+      <p class="num">M10 · FEEDBACK</p>
+      <h3>Delete with a visible undo window</h3>
+      <p>The row collapses in place and the list closes the gap. The existing undo toast springs up with a bar that drains over 5 seconds, so the time left to undo is visible. Undo grows the row back with a highlight.</p>
+      <dl class="props">
+        <dt>Timing</dt><dd>Row collapse 280 ms · toast in 420 ms / out 260 ms · countdown 5 s linear.</dd>
+        <dt>Rules</dt><dd>The countdown matches the real undo window in <code>Toast.tsx</code>. The bar pauses while a finger is on the toast.</dd>
+        <dt>Calm / Off</dt><dd>Calm: fades and a static "Undo" button with the seconds left as text. Off: instant.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="pip">
+  <p class="eyebrow">06 · Pip, rebuilt</p>
+  <h2>A rigged vector Pip with real poses</h2>
+  <div class="prose"><p>Pip becomes an inline SVG built from named parts: body, belly, head, hair, eyes, beak, cheeks, two wings and feet. CSS animates each part, so poses are real body language instead of emoji. The PNG stays for the PWA icon and the share card, where a still image is right. The figures on this page are a placeholder drawing. The final rig should be redrawn from the official artwork so it stays on-model.</p></div>
+  <div class="spec-grid" id="pipPoses"></div>
+  <pre class="mermaid">stateDiagram-v2
+  [*] --> Wave: first open / onboarding
+  Wave --> Idle
+  Idle --> Focus: timer starts
+  Focus --> Rest: Pomodoro break
+  Rest --> Focus: break ends
+  Focus --> Idle: session saved
+  Idle --> Celebrate: daily target first met
+  Celebrate --> Idle: after 2.4 s
+  Idle --> Sleep: shield covered yesterday
+  Sleep --> Idle: first session today</pre>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Part</th><th>Animation</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Body</td><td>Breathe: scale 1 → 1.035 Y, 3.6 s loop (8 s in zen)</td><td>Origin at the feet so Pip never floats off the ground</td></tr>
+      <tr><td>Eyes</td><td>Blink: scaleY 1 → .08 → 1 over 140 ms, every 4.8 s</td><td>Random jitter of ±800 ms so several Pips never blink in sync</td></tr>
+      <tr><td>Wings</td><td>Wave (right wing loop), flap (both, 8 × 260 ms)</td><td>Pivot at the shoulder</td></tr>
+      <tr><td>Whole bird</td><td>Hop 600 ms spring</td><td>Only on Celebrate</td></tr>
+      <tr><td>Accessories</td><td>Drop in from above, 420 ms spring, once at rank-up</td><td>The existing seven rank items, drawn as SVG parts in place of the 🐣 🧣 📓 badges</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="visual">
+  <p class="eyebrow">07 · Visual refresh</p>
+  <h2>Hierarchy before decoration</h2>
+  <div class="spec-grid">
+    <div class="specimen">
+      <h3>A display face for numbers</h3>
+      <div class="compare">
+        <div><small>Today · system UI</small><span style="font:800 34px/1 system-ui;font-variant-numeric:tabular-nums">3h 00m</span></div>
+        <div><small>Proposed · Bricolage</small><span class="dnum" style="font-size:38px;line-height:1">3h 00m</span></div>
+      </div>
+      <p>Bricolage Grotesque for hero numbers and screen titles only. Self-host a Latin subset as WOFF2 (about 30 KB) and precache it so it works offline. Body text stays on the system font.</p>
+    </div>
+    <div class="specimen">
+      <h3>Four elevation levels</h3>
+      <div class="elev">
+        <div style="background:var(--surface2)">L0</div>
+        <div style="background:var(--surface);border:1px solid var(--line)">L1</div>
+        <div class="a-hero">L2</div>
+        <div style="background:var(--paper);box-shadow:0 -10px 24px -10px rgb(0 0 0 / .35);border:1px solid var(--line)">L3</div>
+      </div>
+      <p>L0 for stat pills and tracks. L1 for regular cards. L2 for one hero per screen (the ring, the zen timer). L3 for sheets and toasts. Today everything is L1.</p>
+    </div>
+    <div class="specimen">
+      <h3>Subject colours, used everywhere</h3>
+      <div class="swatches" id="subjSw"></div>
+      <p>The nine colours in <code>SUBJECT_META</code> already exist. Use them in the ring, timesheet dots, chips, planner and heatmap tooltips, so a subject reads the same on every screen.</p>
+    </div>
+    <div class="specimen">
+      <h3>Time-of-day header tint</h3>
+      <div class="tods">
+        <div style="background:linear-gradient(#FCE3C8,#FBF9F5)">Dawn</div>
+        <div style="background:linear-gradient(#F7E2BB,#FBF9F5)">Day</div>
+        <div style="background:linear-gradient(#F3C9B8,#FBF9F5)">Dusk</div>
+        <div style="background:linear-gradient(#C9CFE6,#FBF9F5)">Night</div>
+      </div>
+      <p>A 150 px wash behind the greeting, derived from the active theme's brand-soft colour and shifted by hour. It crossfades over 2 s when the hour bucket changes. Static under Off.</p>
+    </div>
+    <div class="specimen">
+      <h3>Drawn icons in place of emoji</h3>
+      <div class="icons-row" id="iconRow"></div>
+      <p>Streak, rank, shield, target and rest icons in Lucide's 1.9 px stroke style, coloured from theme tokens, so they render the same on every phone.</p>
+    </div>
+    <div class="specimen">
+      <h3>Designed empty and loading states</h3>
+      <p>Replace "PrepStride is waking Pip up…" with Pip hopping on a ring outline. Use skeleton cards at the exact size of the content they precede, so nothing shifts when data arrives. Empty states use a Pip pose plus one action button.</p>
+    </div>
+  </div>
+</section>
+
+<section id="tech">
+  <p class="eyebrow">08 · Implementation</p>
+  <h2>CSS first, one small library where gestures need it</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Need</th><th>Approach</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Entrances, loops, micro-interactions</td><td>CSS keyframes and transitions from tokens in <code>tailwind.config.js</code></td><td>Zero JS, runs off the main thread, matches the current setup</td></tr>
+      <tr><td>Screen transitions</td><td>View Transitions API with <code>flushSync</code></td><td>No dependency. Supported in Chrome for Android and Safari 18+, with an instant fallback.</td></tr>
+      <tr><td>Sheet drag-to-dismiss, sliding highlights</td><td><code>motion</code> (<code>motion/react</code>) via <code>LazyMotion</code> + <code>domAnimation</code></td><td>Gesture physics and layout animation are hard to get right by hand. Adopt only if the measured gzip cost stays inside the budget.</td></tr>
+      <tr><td>Pip</td><td>Inline SVG component <code>PipRig.tsx</code> with CSS part animations</td><td>Theme-aware, crisp at any size, a few KB. Rive is an option later if Pip needs complex acting.</td></tr>
+      <tr><td>Count-ups and rolling digits</td><td><code>CountUp.tsx</code> (requestAnimationFrame) and <code>RollingDigits.tsx</code> (CSS)</td><td>Both take the final value as a prop and render it to assistive tech immediately</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose"><p><strong>New files:</strong> <code>src/styles/motion.css</code>, <code>src/hooks/useMotionPreference.ts</code>, <code>src/components/motion/{CountUp,RollingDigits,Sheet,SegmentedRing}.tsx</code>, <code>src/components/mascot/PipRig.tsx</code>. <strong>Settings:</strong> add <code>motion: 'system' | 'full' | 'calm' | 'off'</code> to settings, defaulting to <code>'system'</code>, and keep old JSON backups restoring cleanly.</p></div>
+<pre class="code">// src/hooks/useMotionPreference.ts
+export type MotionLevel = 'full' | 'calm' | 'off';
+
+export function useMotionPreference(setting: MotionLevel | 'system'): MotionLevel {
+  const [osReduce, setOsReduce] = useState(
+    () =&gt; matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  useEffect(() =&gt; {
+    const mq = matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () =&gt; setOsReduce(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () =&gt; mq.removeEventListener('change', onChange);
+  }, []);
+  const level = setting === 'system' ? (osReduce ? 'calm' : 'full') : setting;
+  useEffect(() =&gt; { document.documentElement.dataset.motion = level; }, [level]);
+  return level;
+}</pre>
+<pre class="code">// App.tsx: screen transitions without a dependency
+const navigate = useCallback((r: Route) =&gt; {
+  const go = () =&gt; { window.location.hash = `/${r}`; setRoute(r); window.scrollTo({ top: 0 }); };
+  if (!document.startViewTransition || document.documentElement.dataset.motion === 'off') return go();
+  document.startViewTransition(() =&gt; flushSync(go));
+}, []);
+
+/* motion.css */
+nav.bottom-nav { view-transition-name: nav; }
+::view-transition-old(root) { animation: var(--dur-quick) var(--ease-exit) both fade-out; }
+::view-transition-new(root) { animation: 340ms var(--ease-emph) both rise-in; }
+html[data-motion='calm'] ::view-transition-new(root) { animation-name: fade-in; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='full']) *, html:not([data-motion='full']) *::before, html:not([data-motion='full']) *::after {
+    animation-iteration-count: 1 !important; scroll-behavior: auto !important;
+  }
+}</pre>
+</section>
+
+<section id="budgets">
+  <p class="eyebrow">09 · Budgets and quality bar</p>
+  <h2>What "done" has to measure</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Area</th><th>Budget</th><th>How it's checked</th></tr></thead>
+    <tbody>
+      <tr><td>JavaScript added</td><td>≤ 25 KB gzipped in total (today 148 KB)</td><td><code>vite build</code> output in each PR description</td></tr>
+      <tr><td>Frame rate</td><td>No long tasks during M1 or M5; under 5% dropped frames at 4× CPU throttle</td><td>Chrome DevTools performance trace on a mid-range Android profile</td></tr>
+      <tr><td>Properties</td><td>Only <code>transform</code>, <code>opacity</code>, <code>stroke-dashoffset</code>, colour and <code>grid-template-rows</code> collapse</td><td>Code review checklist</td></tr>
+      <tr><td>Layout shift</td><td>CLS 0 on Home</td><td>Lighthouse mobile, performance score ≥ 90</td></tr>
+      <tr><td>Input latency</td><td>Every control responds within 100 ms, even mid-animation</td><td>Manual test: tap Save during sheet entry</td></tr>
+      <tr><td>Accessibility</td><td>Nothing flashes more than 3 times a second. All three tiers honoured. Focus is visible and trapped in sheets.</td><td>Manual pass with OS reduced motion on, plus VoiceOver</td></tr>
+      <tr><td>Integrity</td><td>Animated numbers end on the stored values. Celebration fires at most once a day.</td><td>Vitest for <code>CountUp</code> final values and the celebration guard</td></tr>
+      <tr><td>Battery</td><td>No running animations while the document is hidden</td><td>Check <code>document.getAnimations()</code> after <code>visibilitychange</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="rollout">
+  <p class="eyebrow">10 · Rollout</p>
+  <h2>Eight OpenSpec changes, foundation first</h2>
+  <div class="prose"><p>The order matters: the tokens and tiers must exist before any screen uses them, and Pip's rig unblocks four mockups. Each change gets <code>proposal.md</code>, <code>tasks.md</code> and a spec delta, following the existing conventions.</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Change</th><th>Scope</th><th>Mockups</th><th>Acceptance</th></tr></thead>
+    <tbody>
+      <tr><td><code>p1-motion-foundation</code></td><td>Tokens, <code>motion.css</code>, <code>useMotionPreference</code>, Settings → Motion, reduced-motion CSS, confetti-on-ritual fix</td><td>None (enables all)</td><td>All three tiers switch live. OS reduced motion selects Calm. Old backups restore.</td></tr>
+      <tr><td><code>p1-pip-vector-rig</code></td><td><code>PipRig.tsx</code>, six poses, SVG accessories, single Pip on Home</td><td>All with Pip</td><td>No emoji overlays remain. Pose follows the state diagram.</td></tr>
+      <tr><td><code>p1-home-arrival</code></td><td><code>SegmentedRing</code>, <code>CountUp</code>, stagger, elevation L2 hero</td><td>M1</td><td>Exact final values. CLS 0.</td></tr>
+      <tr><td><code>p1-quiet-celebration</code></td><td>Remove <code>ConfettiBurst</code>, ring glow plus feathers, ritual micro-interaction</td><td>M2, M3</td><td>Once-per-day guard has a test.</td></tr>
+      <tr><td><code>p2-navigation-and-sheets</code></td><td>View Transitions, nav pill, <code>Sheet</code> with drag and exit, save flight</td><td>M4, M5</td><td>Quick log still under 3 s end to end.</td></tr>
+      <tr><td><code>p2-zen-ambience</code></td><td>Halo, breath cue, rolling digits, drift, wake lock, visibility pause</td><td>M6</td><td>No animations while hidden.</td></tr>
+      <tr><td><code>p2-data-reveals</code></td><td>Heatmap wave, syllabus chip morph, streak flame and shield fill, undo countdown</td><td>M7 to M10</td><td>Each reveal plays once per view, not per render.</td></tr>
+      <tr><td><code>p2-visual-refresh</code></td><td>Display face, drawn icons, subject colour pass, time-of-day tint, skeletons</td><td>Section 07</td><td>No emoji used as UI icons. Fonts precached offline.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose"><p><strong>Success looks like:</strong> after a week of daily use, the aspirant describes Home as calm and alive rather than busy. Logging time does not get slower. The evening share-digest habit holds or improves. There are no celebration false positives.</p></div>
+</section>
+
+<section id="questions">
+  <p class="eyebrow">11 · Open questions</p>
+  <h2>Decisions needed before p1 starts</h2>
+  <ul class="list prose">
+    <li><strong>Who redraws Pip?</strong> An illustrator can deliver a layered SVG from the official art, or the rig can be drawn in-house from simple shapes, as on this page. The first looks better, the second ships sooner.</li>
+    <li><strong>Haptics:</strong> are short vibration pulses welcome on Android, or should the app stay silent?</li>
+    <li><strong>Breathing cue in zen:</strong> on by default, or opt-in for sessions longer than 25 minutes?</li>
+    <li><strong>Theme-specific ambience:</strong> should LBSNAA Gold or Zen Forest get their own zen colour fields, or should all themes share one?</li>
+    <li><strong><code>motion</code> library:</strong> adopt it for the sheet gesture, or hand-roll drag with Pointer Events to stay dependency-free?</li>
+  </ul>
+</section>
+
+</main>
+
+<script>
+(function () {
+  const root = document.documentElement;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const motion = () => root.dataset.motion || 'full';
+  try { root.dataset.motion = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'calm' : 'full'; } catch (e) { root.dataset.motion = 'full'; }
+
+  const SUBJ = {
+    PRELIMS: ['Prelims', '#B8431F'], GS1: ['GS1', '#E07A5F'], GS2: ['GS2', '#5B8E7D'], GS3: ['GS3', '#4E7EA8'],
+    GS4: ['GS4', '#9A6FB0'], OPTIONAL: ['Optional', '#C98BB9'], ESSAY: ['Essay', '#D4A94E'], CSAT: ['CSAT', '#7EC8E3'], CA: ['CA', '#8AB17D']
+  };
+  const STATUS = [
+    ['Not started', '#B8B2A7'], ['First reading', '#7EC8E3'], ['Notes prepared', '#8AB17D'], ['Revision 1', '#D4A94E'],
+    ['Revision 2', '#E07A5F'], ['Revision 3', '#C98BB9'], ['Revision 4+', '#5B8E7D'], ['Mastered', '#9A6FB0']
+  ];
+  const fmt = (m) => `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+
+  function restart(el, cls = 'play') { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+  function countUp(el, from, to, dur, delay = 0, format = fmt) {
+    cancelAnimationFrame(el._raf);
+    el.setAttribute('aria-label', format(to));
+    if (motion() === 'off') { el.textContent = format(to); return; }
+    const t0 = performance.now() + delay;
+    const step = (now) => {
+      const p = Math.min(1, Math.max(0, (now - t0) / dur));
+      const e = 1 - Math.pow(1 - p, 3);
+      el.textContent = format(Math.round(from + (to - from) * e));
+      if (p < 1) el._raf = requestAnimationFrame(step); else el.textContent = format(to);
+    };
+    el.textContent = format(from);
+    el._raf = requestAnimationFrame(step);
+  }
+
+  function setRoll(el, value, minDigits = 1) {
+    const str = String(value).padStart(minDigits, '0');
+    if (!el._cols || el._cols.length !== str.length) {
+      el.classList.add('roller');
+      el.innerHTML = '';
+      el._cols = [...str].map(() => {
+        const c = document.createElement('span'); c.className = 'rcol'; c.setAttribute('aria-hidden', 'true');
+        const s = document.createElement('span'); s.className = 'rstrip';
+        s.innerHTML = '0123456789'.split('').map((d) => `<span>${d}</span>`).join('');
+        c.appendChild(s); el.appendChild(c); return s;
+      });
+      const sr = document.createElement('span'); sr.className = 'sr'; el.appendChild(sr); el._sr = sr;
+    }
+    [...str].forEach((d, i) => { el._cols[i].style.transform = `translateY(${-Number(d)}em)`; });
+    el._sr.textContent = str;
+  }
+
+  function pip({ glasses = false, sleepy = false, cls = 'loop' } = {}) {
+    const eyes = sleepy
+      ? '<g stroke="#2A211B" stroke-width="2.4" fill="none" stroke-linecap="round"><path d="M45 53 q6 4 12 0"/><path d="M63 53 q6 4 12 0"/></g>'
+      : '<g class="eyes"><circle cx="51" cy="52" r="7" fill="#fff"/><circle cx="69" cy="52" r="7" fill="#fff"/><circle cx="52" cy="53" r="4.2" fill="#2A211B"/><circle cx="70" cy="53" r="4.2" fill="#2A211B"/><circle cx="53.6" cy="51.4" r="1.5" fill="#fff"/><circle cx="71.6" cy="51.4" r="1.5" fill="#fff"/></g>';
+    const specs = glasses ? '<g fill="none" stroke="#2A211B" stroke-width="1.8"><circle cx="51" cy="52" r="9.5"/><circle cx="69" cy="52" r="9.5"/></g>' : '';
+    return `<svg class="pip ${cls}" viewBox="0 0 120 120" aria-hidden="true" width="100%" height="100%">
+      <ellipse cx="60" cy="114" rx="24" ry="3.5" fill="#000" opacity=".12"/>
+      <g stroke="#E8892B" stroke-width="2.6" stroke-linecap="round" fill="none"><path d="M51 103l-4 8M51 103v9M51 103l4 8M69 103l-4 8M69 103v9M69 103l4 8"/></g>
+      <g class="pip-body">
+        <g class="wing wing-l"><ellipse cx="31" cy="78" rx="8" ry="18" transform="rotate(32 31 78)" fill="#7EC8E3"/><ellipse cx="34" cy="76" rx="8" ry="17" transform="rotate(16 34 76)" fill="#F2C14E"/><ellipse cx="37.5" cy="74" rx="7.5" ry="15" fill="#F49FB6"/></g>
+        <g class="wing wing-r"><ellipse cx="89" cy="78" rx="8" ry="18" transform="rotate(-32 89 78)" fill="#7EC8E3"/><ellipse cx="86" cy="76" rx="8" ry="17" transform="rotate(-16 86 76)" fill="#F2C14E"/><ellipse cx="82.5" cy="74" rx="7.5" ry="15" fill="#F49FB6"/></g>
+        <ellipse cx="60" cy="80" rx="26" ry="26" fill="#7CC46A"/>
+        <ellipse cx="60" cy="88" rx="15" ry="14" fill="#D6EDB0"/>
+        <circle cx="60" cy="50" r="25" fill="#7CC46A"/>
+        <g fill="#2F2620"><circle cx="43" cy="34" r="10"/><circle cx="53" cy="27" r="10"/><circle cx="65" cy="26" r="10"/><circle cx="76" cy="31" r="10"/><circle cx="83" cy="41" r="7.5"/><circle cx="37" cy="43" r="7"/></g>
+        ${eyes}${specs}
+        <circle cx="42" cy="62" r="3.3" fill="#F49FB6" opacity=".75"/><circle cx="78" cy="62" r="3.3" fill="#F49FB6" opacity=".75"/>
+        <path d="M54 60 Q60 56 66 60 Q61 69 60 69 Q59 69 54 60Z" fill="#F29A38"/>
+      </g></svg>`;
+  }
+
+  const ICON = {
+    flame: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.8 1.2 2.8 2.3 3.2C10.8 9 11 6 12 3z"/></svg>',
+    rank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M8.5 13 7 21l5-2.5L17 21l-1.5-8"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
+    target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+    play: '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M7 4.5v15l12-7.5z"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1.2"/><rect x="14" y="4.5" width="4" height="15" rx="1.2"/></svg>',
+    stop: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5"/></svg>',
+    check: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>'
+  };
+
+  /* Segmented ring: segments [{min,color}] over target minutes. */
+  function ringSVG(segs, target, r = 66, sw = 13, gap = 4) {
+    const C = 2 * Math.PI * r; let acc = 0; const total = segs.reduce((s, x) => s + x.min, 0);
+    const arcs = segs.map((s) => {
+      const len = Math.max(0, (s.min / target) * C - gap);
+      const angle = (acc / target) * 360 - 90;
+      const delay = 120 + (acc / Math.max(1, total)) * 520;
+      acc += s.min;
+      return `<circle class="seg-arc" cx="80" cy="80" r="${r}" stroke="${s.color}" stroke-width="${sw}" stroke-dasharray="${len} ${C}" style="--len:${len};--d:${delay}ms" transform="rotate(${angle} 80 80)"/>`;
+    }).join('');
+    return `<svg viewBox="0 0 160 160" aria-hidden="true"><circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--line)" stroke-width="${sw}"/>${arcs}</svg>`;
+  }
+
+  /* Hero + pose gallery + swatches */
+  $('#heroPip').innerHTML = pip({ cls: 'loop wave' });
+  const poses = [['Idle', pip()], ['Wave', pip({ cls: 'loop wave' })], ['Focus', pip({ glasses: true, cls: 'loop slow' })], ['Rest / sleep', pip({ sleepy: true, cls: 'loop slow' })], ['Celebrate', pip()]];
+  $('#pipPoses').innerHTML = poses.map(([n, s], i) => `<div class="specimen" style="justify-items:center;text-align:center"><div style="width:92px;height:92px" ${i === 4 ? 'data-celebrate' : ''}>${s}</div><h3>${n}</h3></div>`).join('');
+  const celeb = $('[data-celebrate] .pip');
+  if (celeb) setInterval(() => { if (motion() === 'full' && !document.hidden) { celeb.classList.remove('flap', 'hop'); void celeb.offsetWidth; celeb.classList.add('flap', 'hop'); } }, 3200);
+  $('#subjSw').innerHTML = Object.values(SUBJ).map(([n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join('');
+  $('#iconRow').innerHTML = ['flame', 'rank', 'shield', 'target', 'moon'].map((k) => `<span style="color:var(--brand-text);display:inline-flex" title="${k}">${ICON[k]}</span>`).join('') + '<span style="font-size:13px;color:var(--ink-soft)">replace 🔥 🐣 🛡 🎯 😴</span>';
+
+  /* Tier switch */
+  $$('#tierSeg button').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.tier === motion()));
+    b.addEventListener('click', () => {
+      root.dataset.motion = b.dataset.tier;
+      $$('#tierSeg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    });
+  });
+
+  const demos = {};
+
+  /* ── M1 Home ── */
+  const homeSegs = [{ min: 90, color: SUBJ.GS2[1] }, { min: 45, color: SUBJ.CA[1] }, { min: 45, color: SUBJ.PRELIMS[1] }];
+  $('#homeScreen').innerHTML = `
+    <div class="new">
+      <div class="tod"></div>
+      <div class="sbar"><span>4:12</span><span>●●● ▮</span></div>
+      <div class="pad" style="display:grid;gap:12px">
+        <div class="home-head r1" style="--d:0ms">
+          <div><p class="a-eyebrow">Sunday, 1 November</p><p class="a-h">Good afternoon, Champion</p>
+          <span class="dchip"><span style="color:var(--brand-text);display:inline-flex;width:11px;height:11px">${ICON.target}</span>203 days to Prelims</span></div>
+          <div style="width:54px;height:54px;flex:none">${pip()}</div>
+        </div>
+        <div class="a-hero" style="padding:14px 12px 12px;display:grid;gap:10px">
+          <div class="ringbox">${ringSVG(homeSegs, 240)}
+            <div class="center"><span class="dnum" data-count>3h 00m</span><small>of 4h · 1h to go</small></div>
+          </div>
+          <div class="legend">
+            <span class="r1" style="--d:600ms"><i style="background:${SUBJ.GS2[1]}"></i>GS2 1h 30m</span>
+            <span class="r1" style="--d:660ms"><i style="background:${SUBJ.CA[1]}"></i>CA 45m</span>
+            <span class="r1" style="--d:720ms"><i style="background:${SUBJ.PRELIMS[1]}"></i>Prelims 45m</span>
+          </div>
+          <div style="display:flex;gap:7px"><button type="button" class="a-btn primary">${ICON.play} Start timer</button><button type="button" class="a-btn">${ICON.plus} Quick log</button></div>
+        </div>
+        <div class="stats">
+          <div class="stat r1" style="--d:640ms"><span style="color:#E07A5F;width:18px;height:18px;display:inline-flex">${ICON.flame}</span><b>6</b><span>Streak</span></div>
+          <div class="stat r1" style="--d:700ms"><span style="color:var(--brand-text);width:18px;height:18px;display:inline-flex">${ICON.rank}</span><b>1</b><span>Rank</span></div>
+          <div class="stat r1" style="--d:760ms"><span style="color:${SUBJ.GS3[1]};width:18px;height:18px;display:inline-flex">${ICON.shield}</span><b>1</b><span>Shields</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="old" hidden>
+      <div class="sbar"><span>4:12</span><span>●●● ▮</span></div>
+      <div class="pad" style="display:grid;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;min-width:0"><p class="a-eyebrow">Sunday, 1 November 2026</p><p style="font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Good afternoon, Champi…</p><p style="font-size:9.5px;font-weight:700;color:var(--brand-text)">🎯 Prelims: expected 23 May 2027 · 203 days</p></div><div class="o-pip" style="width:46px;height:46px">${pip({ cls: '' })}</div></div>
+        <div class="o-card" style="padding:10px;font-weight:700;font-size:11.5px">📅 Your weekly plan</div>
+        <div class="o-card" style="padding:12px;display:grid;justify-items:center;gap:6px">
+          <div class="ringbox" style="width:150px;height:150px"><svg viewBox="0 0 160 160"><circle cx="80" cy="80" r="66" fill="none" stroke="var(--line)" stroke-width="13"/><circle cx="80" cy="80" r="66" fill="none" stroke="var(--brand)" stroke-width="13" stroke-linecap="round" stroke-dasharray="${0.75 * 2 * Math.PI * 66} 999" transform="rotate(-90 80 80)"/></svg>
+            <div class="center"><div class="o-pip" style="width:40px;height:40px;margin:0 auto">${pip({ cls: '' })}</div><b style="font-size:20px">3h</b><small>today · target 4h</small></div></div>
+          <p style="font-size:9.5px;font-style:italic;color:var(--ink-soft);text-align:center">"Small daily strides compound into an unstoppable journey."</p>
+          <div style="display:flex;gap:6px;width:100%"><button type="button" class="a-btn primary">${ICON.play} Start timer</button><button type="button" class="a-btn">${ICON.plus} Quick log</button></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><div class="o-pill"><b>6 🔥</b><span>Streak</span></div><div class="o-pill"><b>1 🐣</b><span>Rank</span></div><div class="o-pill"><b>1 🛡️</b><span>Shields</span></div></div>
+      </div>
+    </div>`;
+  demos.home = (m) => {
+    const s = $('.new', m);
+    if (s.hidden) return;
+    restart(s);
+    countUp($('[data-count]', s), 0, 180, 900, 250);
+  };
+  $$('#homeVer button').forEach((b) => b.addEventListener('click', () => {
+    $$('#homeVer button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const m = b.closest('.mock');
+    $('.new', m).hidden = b.dataset.v !== 'new';
+    $('.old', m).hidden = b.dataset.v !== 'old';
+    if (b.dataset.v === 'new') demos.home(m);
+  }));
+
+  /* ── M2 Goal met ── */
+  const R2 = 66, C2 = 2 * Math.PI * R2;
+  const featherColors = ['#F49FB6', '#F2C14E', '#7EC8E3'];
+  $('#goalScreen').innerHTML = `
+    <div class="sbar"><span>7:48</span><span>●●● ▮</span></div>
+    <div class="feathers">${Array.from({ length: 12 }, (_, i) => `<span class="feather" style="left:${8 + ((i * 37) % 84)}%;background:${featherColors[i % 3]};--d:${(i % 6) * 140}ms;--t:${2.4 + (i % 4) * 0.3}s;--sw:${i % 2 ? 26 : -26};--r:${i % 2 ? 160 : -140}deg"></span>`).join('')}</div>
+    <div class="pad" style="display:grid;gap:12px">
+      <div><p class="a-eyebrow">Sunday, 1 November</p><p class="a-h">Good evening, Champion</p></div>
+      <div class="a-hero" style="padding:16px 12px;display:grid;gap:12px">
+        <div class="ringbox"><svg viewBox="0 0 160 160" aria-hidden="true"><circle cx="80" cy="80" r="${R2}" fill="none" stroke="var(--line)" stroke-width="13"/><circle class="glow" cx="80" cy="80" r="${R2}" stroke-width="12"/><circle class="prog" cx="80" cy="80" r="${R2}" stroke-width="13" stroke-dasharray="${C2}" stroke-dashoffset="0" transform="rotate(-90 80 80)"/></svg>
+          <div class="center"><span class="dnum" data-count>4h 00m</span><small>of 4h target</small></div></div>
+      </div>
+      <div class="a-card metmsg">
+        <div style="width:54px;height:54px;flex:none" class="gpip">${pip()}</div>
+        <div class="stack">
+          <div class="lbl-a"><b style="font-size:13px">10m to go</b><p style="font-size:11px;color:var(--ink-soft)">One more short session closes the ring.</p></div>
+          <div class="lbl-b"><b style="font-size:13px">Target met</b><p style="font-size:11px;color:var(--ink-soft)">4h 00m across 3 subjects. Pip is proud of you.</p></div>
+        </div>
+      </div>
+    </div>`;
+  const gs = $('#goalScreen');
+  gs.classList.add('met');
+  demos.goal = () => {
+    clearTimeout(gs._t1); clearTimeout(gs._t2);
+    const prog = $('.prog', gs), num = $('[data-count]', gs), gp = $('.gpip .pip', gs);
+    gs.classList.remove('met'); gp.classList.remove('flap', 'hop');
+    prog.style.transition = 'none'; prog.style.strokeDashoffset = String(C2 * (10 / 240));
+    num.textContent = fmt(230); void prog.offsetWidth; prog.style.transition = '';
+    gs._t1 = setTimeout(() => { prog.style.strokeDashoffset = '0'; countUp(num, 230, 240, 700); }, 450);
+    gs._t2 = setTimeout(() => { void gs.offsetWidth; gs.classList.add('met'); if (motion() === 'full') gp.classList.add('flap', 'hop'); }, 1200);
+  };
+
+  /* ── M3 Rituals ── */
+  const rituals = [['Read the newspaper', 'The Hindu', true], ['Editorial notes', '2 editorials', false], ['MCQ practice', 'Log set', false], ['Answer writing', 'Add', false]];
+  $('#ritScreen').innerHTML = `
+    <div class="sbar"><span>9:05</span><span>●●● ▮</span></div>
+    <div class="pad" style="display:grid;gap:12px">
+      <div><p class="a-eyebrow">Daily rituals</p><p class="a-h">Small habits, every day</p></div>
+      <div class="a-card" style="padding:8px 4px;display:grid;gap:2px">
+        ${rituals.map(([t, s, on]) => `<button type="button" class="ritual${on ? ' on' : ''}" aria-pressed="${on}"><span class="box"><svg viewBox="0 0 24 24" width="16" height="16"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>${t}<span class="sub">${s}</span><span class="xp">+10 XP</span></button>`).join('')}
+        <div style="padding:8px 10px 4px;display:grid;gap:7px">
+          <div class="dots">${'<i></i>'.repeat(6)}</div>
+          <p style="font-size:10.5px;color:var(--ink-soft);font-weight:600;text-align:right"><span class="rcount"></span>/6 rituals today</p>
+        </div>
+      </div>
+      <div class="a-card" style="padding:12px;display:flex;gap:10px;align-items:center"><div style="width:40px;height:40px;flex:none">${pip()}</div><p style="font-size:11px;color:var(--ink-soft)">Each ritual counts toward Editorial Hawk and other badges you already have.</p></div>
+    </div>`;
+  const rs = $('#ritScreen');
+  function ritRefresh() {
+    const n = $$('.ritual.on', rs).length;
+    setRoll($('.rcount', rs), n);
+    $$('.dots i', rs).forEach((d, i) => d.classList.toggle('on', i < n));
+  }
+  function ritToggle(btn) {
+    const on = !btn.classList.contains('on');
+    btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', String(on));
+    if (on) { restart(btn, 'pop'); restart(btn, 'flash'); restart($('.xp', btn), 'float'); }
+    ritRefresh();
+  }
+  $$('.ritual', rs).forEach((b) => b.addEventListener('click', () => ritToggle(b)));
+  ritRefresh();
+  demos.rituals = () => {
+    clearTimeout(rs._a); clearTimeout(rs._b);
+    $$('.ritual', rs).forEach((b, i) => { b.classList.toggle('on', i === 0); b.setAttribute('aria-pressed', String(i === 0)); });
+    ritRefresh();
+    rs._a = setTimeout(() => ritToggle($$('.ritual', rs)[1]), 500);
+    rs._b = setTimeout(() => ritToggle($$('.ritual', rs)[2]), 1300);
+  };
+
+  /* ── M4 Nav ── */
+  const navIcons = [
+    ['Home', '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'],
+    ['Study', '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>'],
+    ['Syllabus', '<path d="M2 4h7a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H2zM22 4h-7a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h8z"/>'],
+    ['Tests', '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/>'],
+    ['More', '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']
+  ];
+  const panels = [
+    `<p class="a-h">Today</p><div class="a-hero ph-row"><span>Logged</span><b class="dnum" style="font-size:20px">3h 00m</b></div><div class="a-card ph-row"><span>Rituals</span><small>1 of 6</small></div><div class="a-card ph-row"><span>Weekly plan</span><small>4 of 9 targets</small></div>`,
+    `<p class="a-h">Study</p><div class="a-card ph-row"><span>This week</span><b>18h 40m</b></div><div class="a-card ph-row"><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SUBJ.GS2[1]};margin-right:6px"></i>GS 2 · Polity</span><small>1h 30m</small></div><div class="a-card ph-row"><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SUBJ.CA[1]};margin-right:6px"></i>Current affairs</span><small>45m</small></div>`,
+    `<p class="a-h">Syllabus</p>${[['GS 2 · Polity', 38], ['GS 3 · Economy', 22], ['GS 1 · History', 51]].map(([n, p]) => `<div class="a-card" style="padding:10px 12px;display:grid;gap:6px"><div style="display:flex;justify-content:space-between;font-weight:600"><span>${n}</span><small style="color:var(--ink-soft)">${p}% read</small></div><div class="bar"><i style="width:${p}%"></i></div></div>`).join('')}`,
+    `<p class="a-h">Tests</p><div class="a-card ph-row"><span>Mock 12 · Prelims GS</span><b>104.66</b></div><div class="a-card ph-row"><span>Accuracy</span><small>71%</small></div><div class="a-card ph-row"><span>Mistake diary</span><small>23 entries</small></div>`,
+    `<p class="a-h">More</p>${['Weekly planner', 'Rewards & Treat Box', 'Analytics & Books', 'Settings & Data'].map((t) => `<div class="a-card ph-row"><span>${t}</span><small>›</small></div>`).join('')}`
+  ];
+  $('#navScreen').innerHTML = `<div class="sbar"><span>9:41</span><span>●●● ▮</span></div><div class="panel">${panels[0]}</div>
+    <nav class="navbar"><span class="pill"></span>${navIcons.map(([l, p], i) => `<button type="button" ${i === 0 ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24">${p}</svg>${l}</button>`).join('')}</nav>`;
+  const ns = $('#navScreen'); let navIdx = 0;
+  function navGo(i) {
+    if (i === navIdx) return;
+    const dir = i > navIdx ? 'in-r' : 'in-l';
+    navIdx = i;
+    const btns = $$('.navbar button', ns);
+    btns.forEach((b, j) => { if (j === i) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    $('.pill', ns).style.transform = `translateX(${i * 100}%)`;
+    restart(btns[i], 'bounce');
+    const p = $('.panel', ns); p.innerHTML = panels[i]; p.classList.remove('in-r', 'in-l'); void p.offsetWidth; p.classList.add(dir);
+  }
+  $$('.navbar button', ns).forEach((b, i) => b.addEventListener('click', () => navGo(i)));
+  demos.nav = () => {
+    (ns._ts || []).forEach(clearTimeout);
+    navGo(0);
+    ns._ts = [2, 3, 1].map((t, k) => setTimeout(() => navGo(t), 500 + k * 800));
+  };
+
+  /* ── M5 Sheet ── */
+  const sheetSubj = ['PRELIMS', 'GS1', 'GS2', 'GS3', 'CA'];
+  const durs = [30, 45, 60, 90, 120];
+  $('#sheetScreen').innerHTML = `
+    <div class="sbar"><span>6:20</span><span>●●● ▮</span></div>
+    <div class="pad" style="display:grid;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:end"><div><p class="a-eyebrow">Today's timesheet</p><p class="a-h dnum" data-total>1h 30m</p></div><button type="button" class="a-btn primary open-sheet" style="flex:none;padding:0 12px">${ICON.plus} Quick log</button></div>
+      <div class="a-card ts-list" style="padding:4px">
+        <div class="tsrow-wrap"><div><div class="tsrow"><i style="background:${SUBJ.PRELIMS[1]}"></i>Prelims · PYQ set<b>45m</b></div></div></div>
+        <div class="tsrow-wrap"><div><div class="tsrow"><i style="background:${SUBJ.CA[1]}"></i>Current affairs<b>45m</b></div></div></div>
+      </div>
+      <div class="a-card" style="padding:12px;display:flex;gap:10px;align-items:center"><div style="width:40px;height:40px;flex:none">${pip()}</div><p style="font-size:11px;color:var(--ink-soft)">Logged a class or library hour? Quick log takes three taps.</p></div>
+    </div>
+    <div class="backdrop"></div>
+    <div class="sheet" role="dialog" aria-label="Quick log">
+      <div class="handle"></div>
+      <p style="font-weight:800;font-size:14px">Quick log</p>
+      <div><p class="a-eyebrow" style="margin-bottom:6px">Subject</p><div class="chips">${sheetSubj.map((k) => `<button type="button" class="chip" data-s="${k}" style="--c:${SUBJ[k][1]}">${SUBJ[k][0]}</button>`).join('')}</div></div>
+      <div><p class="a-eyebrow" style="margin-bottom:6px">Duration</p><div class="durs"><span class="ind"></span>${durs.map((d) => `<button type="button" data-d="${d}">${d < 60 ? d + 'm' : d / 60 + 'h'}</button>`).join('')}</div></div>
+      <button type="button" class="a-btn primary save" style="min-height:42px;font-size:12.5px"><span class="t1">Save session</span><span class="t2">${ICON.check}</span></button>
+    </div>`;
+  const ss = $('#sheetScreen');
+  const sheetState = { subj: 'GS2', dur: 60, total: 90 };
+  function selSubj(k) { sheetState.subj = k; $$('.chip', ss).forEach((c) => c.classList.toggle('sel', c.dataset.s === k)); }
+  function selDur(d) {
+    sheetState.dur = d;
+    $$('.durs button', ss).forEach((b) => b.classList.toggle('sel', Number(b.dataset.d) === d));
+    const b = $(`.durs button[data-d="${d}"]`, ss), ind = $('.durs .ind', ss);
+    ind.style.width = b.offsetWidth + 'px'; ind.style.transform = `translateX(${b.offsetLeft}px)`;
+  }
+  function openSheet() { $('.save', ss).classList.remove('done'); ss.classList.add('open'); selDur(sheetState.dur); }
+  function closeSheet() { ss.classList.remove('open'); }
+  function saveSheet() {
+    const btn = $('.save', ss); if (btn.classList.contains('done')) return;
+    btn.classList.add('done');
+    setTimeout(() => {
+      closeSheet();
+      const k = sheetState.subj, d = sheetState.dur;
+      const w = document.createElement('div'); w.className = 'tsrow-wrap new added';
+      w.innerHTML = `<div><div class="tsrow"><i style="background:${SUBJ[k][1]}"></i>${SUBJ[k][0]} · quick log<b>${fmt(d).replace(/^0h /, '').replace(/ 00m$/, '')}</b></div></div>`;
+      $('.ts-list', ss).prepend(w);
+      const from = sheetState.total; sheetState.total += d;
+      countUp($('[data-total]', ss), from, sheetState.total, 600, 150);
+    }, motion() === 'off' ? 0 : 360);
+  }
+  $('.open-sheet', ss).addEventListener('click', openSheet);
+  $('.backdrop', ss).addEventListener('click', closeSheet);
+  $$('.chip', ss).forEach((c) => c.addEventListener('click', () => selSubj(c.dataset.s)));
+  $$('.durs button', ss).forEach((b) => b.addEventListener('click', () => selDur(Number(b.dataset.d))));
+  $('.save', ss).addEventListener('click', saveSheet);
+  selSubj('GS2');
+  demos.sheet = (m, auto) => {
+    if (!auto) return;
+    (ss._ts || []).forEach(clearTimeout);
+    $$('.added', ss).forEach((n) => n.remove());
+    sheetState.total = 90; $('[data-total]', ss).textContent = fmt(90); closeSheet(); selSubj('PRELIMS'); sheetState.dur = 30;
+    ss._ts = [
+      setTimeout(openSheet, 400), setTimeout(() => selSubj('GS2'), 1100),
+      setTimeout(() => selDur(60), 1600), setTimeout(saveSheet, 2300)
+    ];
+  };
+
+  /* ── M6 Zen ── */
+  const RZ = 86, CZ = 2 * Math.PI * RZ, WORK = 50 * 60;
+  $('#zenScreen').innerHTML = `
+    <span class="ambient a1"></span><span class="ambient a2"></span>
+    <div class="zen-top"><span class="zen-pill">Pomodoro · 50 / 10</span><span class="zen-pill">Zen</span></div>
+    <div class="halo-wrap">
+      <span class="halo"></span>
+      <svg class="arc" viewBox="0 0 190 190" aria-hidden="true"><circle cx="95" cy="95" r="${RZ}" fill="none" stroke="rgb(255 255 255 / .08)" stroke-width="4"/><circle class="zarc" cx="95" cy="95" r="${RZ}" fill="none" stroke="var(--zen-brand)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${CZ}" style="transition:stroke-dashoffset 1s linear"/></svg>
+      <div style="width:104px;height:104px;position:relative">${pip({ glasses: true, cls: 'loop slow' })}</div>
+    </div>
+    <div class="cue"><span>Breathe in</span><span>Breathe out</span></div>
+    <div class="clock"><span class="zm1"></span><span class="zm2"></span><span class="colon">:</span><span class="zs1"></span><span class="zs2"></span></div>
+    <div style="text-align:center;margin-top:10px"><p style="font-weight:700;font-size:12px;color:#8FC7B4">GS 2 · Polity &amp; Governance</p><p style="font-size:11px;color:var(--zen-soft)">Fundamental Rights (Art. 12 to 35)</p><p style="font-size:10px;color:var(--zen-soft);margin-top:6px">10m break after this</p></div>
+    <div class="zen-ctrls"><button type="button" class="zbtn main" aria-label="Pause">${ICON.pause}</button><button type="button" class="zbtn alt" aria-label="Stop and save">${ICON.stop}</button></div>`;
+  const zs = $('#zenScreen');
+  let zenLeft = 24 * 60 + 17, zenPaused = false, zenVisible = false;
+  function zenRender() {
+    const m = Math.floor(zenLeft / 60), s = zenLeft % 60;
+    const mm = String(m).padStart(2, '0'), sec = String(s).padStart(2, '0');
+    setRoll($('.zm1', zs), mm[0]); setRoll($('.zm2', zs), mm[1]); setRoll($('.zs1', zs), sec[0]); setRoll($('.zs2', zs), sec[1]);
+    $('.zarc', zs).style.strokeDashoffset = String(CZ * (1 - zenLeft / WORK));
+  }
+  zenRender();
+  setInterval(() => {
+    if (zenPaused || !zenVisible || document.hidden) return;
+    zenLeft = zenLeft > 0 ? zenLeft - 1 : 24 * 60 + 17; zenRender();
+  }, 1000);
+  const zmain = $('.zbtn.main', zs);
+  zmain.addEventListener('click', () => {
+    zenPaused = !zenPaused; zs.classList.toggle('paused', zenPaused);
+    zmain.innerHTML = zenPaused ? ICON.play.replace('width="13" height="13"', '') : ICON.pause;
+    zmain.setAttribute('aria-label', zenPaused ? 'Resume' : 'Pause');
+  });
+  document.addEventListener('visibilitychange', () => zs.classList.toggle('paused', document.hidden || zenPaused));
+  new IntersectionObserver((es) => es.forEach((e) => { zenVisible = e.isIntersecting; }), { threshold: 0.2 }).observe(zs);
+
+  /* ── M7 Streak & shield ── */
+  $('#streakScreen').innerHTML = `
+    <div class="sbar"><span>8:30</span><span>●●● ▮</span></div>
+    <div class="pad" style="display:grid;gap:12px">
+      <div><p class="a-eyebrow">Consistency</p><p class="a-h">Streak and shields</p></div>
+      <div class="tile2">
+        <div class="a-card st-flame" data-tier="2">
+          <div class="flame-box"><svg class="flame" viewBox="0 0 40 56" aria-hidden="true"><defs><linearGradient id="flg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#E07A5F"/><stop offset="1" stop-color="#F2C14E"/></linearGradient></defs><g class="sway"><path d="M20 2c3 9 15 15 15 30a15 15 0 0 1-30 0c0-6 3-11 6-14 1 5 4 8 7 9C16 19 17 10 20 2z" fill="url(#flg)"/><path d="M20 26c2 5 7 7 7 14a7 7 0 0 1-14 0c0-3 2-6 4-7 0 2 1 3 2 3-1-3 0-7 1-10z" fill="#FCE7A6"/></g></svg></div>
+          <span class="big st-num"></span><span class="a-eyebrow">day streak</span>
+        </div>
+        <div class="a-card">
+          <div class="shield-box">
+            <svg class="shield-svg" viewBox="0 0 52 60" aria-hidden="true"><defs><clipPath id="shclip"><path d="M26 3 5 11v15c0 14 9 25 21 31 12-6 21-17 21-31V11z"/></clipPath></defs>
+              <rect class="shield-fill" x="0" width="52" clip-path="url(#shclip)" style="fill:var(--sky)"/>
+              <path d="M26 3 5 11v15c0 14 9 25 21 31 12-6 21-17 21-31V11z" fill="none" stroke="var(--ink-soft)" stroke-width="2.2" stroke-linejoin="round"/></svg>
+            ${[[-26, -18], [24, -20], [-20, 12], [22, 14], [0, -30]].map(([x, y]) => `<span class="spark" style="--x:${x}px;--y:${y}px"></span>`).join('')}
+          </div>
+          <span class="big sh-num"></span><span class="a-eyebrow">shields (max 3)</span>
+        </div>
+      </div>
+      <div class="a-card" style="padding:10px 12px;display:grid;gap:6px"><p style="font-size:11px;font-weight:600"><span class="sh-prog"></span> of 7 target-days to the next shield</p><div class="bar"><i class="sh-bar" style="transition:width .6s var(--ease-emph);background:var(--sky)"></i></div></div>
+      <button type="button" class="a-btn primary st-add" style="min-height:40px">Log a target-met day</button>
+      <p class="st-copy" style="font-size:10.5px;color:var(--ink-soft);text-align:center"></p>
+    </div>`;
+  const sk = $('#streakScreen');
+  const st = { streak: 6, prog: 6, shields: 1 };
+  const tierOf = (n) => (n === 0 ? 0 : n < 3 ? 1 : n < 7 ? 2 : 3);
+  function stRender() {
+    setRoll($('.st-num', sk), st.streak);
+    setRoll($('.sh-num', sk), st.shields);
+    $('.sh-prog', sk).textContent = st.shields >= 3 ? '—' : st.prog;
+    $('.sh-bar', sk).style.width = `${(st.prog / 7) * 100}%`;
+    $('.st-flame', sk).dataset.tier = tierOf(st.streak);
+    const h = 60 * (st.prog / 7);
+    const f = $('.shield-fill', sk); f.setAttribute('y', String(60 - h)); f.setAttribute('height', String(h));
+    $('.st-copy', sk).textContent = st.streak >= 7 ? 'Seven days running. The flame is at full size.' : st.streak >= 3 ? 'Steady. The flame grows again at 7 days.' : st.streak > 0 ? 'A good start. The flame grows at 3 days.' : 'Start today.';
+  }
+  function stAdd() {
+    st.streak += 1;
+    if (st.shields < 3) {
+      st.prog += 1;
+      if (st.prog >= 7) {
+        st.shields += 1; stRender(); restart($('.shield-box', sk), 'earned');
+        clearTimeout(sk._r); sk._r = setTimeout(() => { st.prog = 0; stRender(); }, 900);
+        return;
+      }
+    }
+    stRender();
+  }
+  $('.st-add', sk).addEventListener('click', stAdd);
+  stRender();
+  demos.streak = () => {
+    clearTimeout(sk._t); clearTimeout(sk._r);
+    Object.assign(st, { streak: 6, prog: 6, shields: 1 }); $('.shield-box', sk).classList.remove('earned'); stRender();
+    sk._t = setTimeout(stAdd, 700);
+  };
+
+  /* ── M8 Heatmap ── */
+  const WEEKS = 15, today = new Date(2026, 10, 1); // Sunday 1 Nov 2026
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const cells = []; const monthCols = [];
+  const start = new Date(today); start.setDate(today.getDate() - (WEEKS * 7 - 1));
+  for (let w = 0; w < WEEKS; w++) for (let d = 0; d < 7; d++) {
+    const dt = new Date(start); dt.setDate(start.getDate() + w * 7 + d);
+    const recency = w / WEEKS; const r = rnd();
+    const lvl = r < 0.12 - recency * 0.06 ? 0 : Math.min(4, Math.floor(r * 3 + recency * 2));
+    const mins = lvl === 0 ? 0 : lvl * 75 + Math.floor(rnd() * 60);
+    cells.push({ w, d, dt, lvl, mins });
+    if (d === 0 && (w === 0 || dt.getDate() <= 7)) monthCols.push([w, dt.toLocaleDateString('en-IN', { month: 'short' })]);
+  }
+  const avg7 = Math.round(cells.slice(-7).reduce((s, c) => s + c.mins, 0) / 7);
+  $('#heatScreen').innerHTML = `
+    <div class="sbar"><span>10:02</span><span>●●● ▮</span></div>
+    <div class="pad" style="display:grid;gap:12px">
+      <div><p class="a-eyebrow">Analytics · example data</p><p class="a-h">Consistency</p></div>
+      <div class="a-hero" style="padding:12px 10px;display:grid;gap:6px">
+        <div class="tip" aria-live="polite"><span>Tap a day to see its hours</span></div>
+        <div class="months" style="position:relative;height:12px;width:${WEEKS * 14 - 3}px;margin:0 auto">${monthCols.map(([w, m]) => `<span style="position:absolute;left:${w * 14}px">${m}</span>`).join('')}</div>
+        <div class="hm">${cells.map((c) => `<button type="button" data-l="${c.lvl}" style="--w:${c.w};--r:${c.d}" ${c.dt.getTime() === today.getTime() ? 'class="today"' : ''} aria-label="${c.dt.toDateString()}"></button>`).join('')}</div>
+        <div class="lg">Less <i style="background:var(--surface2)"></i><i style="background:rgb(var(--brand-rgb)/.28)"></i><i style="background:rgb(var(--brand-rgb)/.5)"></i><i style="background:rgb(var(--brand-rgb)/.75)"></i><i style="background:var(--brand)"></i> More</div>
+      </div>
+      <div class="stats" style="grid-template-columns:1fr 1fr">
+        <div class="stat"><b class="hm-avg">${fmt(avg7)}</b><span>7-day average</span></div>
+        <div class="stat"><b>${cells.filter((c) => c.lvl > 0).length}</b><span>study days</span></div>
+      </div>
+    </div>`;
+  const hs = $('#heatScreen');
+  $$('.hm button', hs).forEach((b, i) => b.addEventListener('click', () => {
+    const c = cells[i];
+    $$('.hm button.picked', hs).forEach((x) => x.classList.remove('picked')); b.classList.add('picked');
+    $('.tip', hs).innerHTML = `<span>${c.dt.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} · ${c.mins ? fmt(c.mins) : 'rest day'}</span>`;
+  }));
+  demos.heat = () => { restart(hs); countUp($('.hm-avg', hs), 0, avg7, 800, 300); };
+
+  /* ── M9 Syllabus ── */
+  const topics = [['Fundamental Rights (Art. 12 to 35)', 2], ['Monetary policy and the RBI', 0], ['Indus Valley Civilisation', 5]];
+  $('#sylScreen').innerHTML = `
+    <div class="sbar"><span>11:15</span><span>●●● ▮</span></div>
+    <div class="pad" style="display:grid;gap:10px">
+      <div><p class="a-eyebrow">Syllabus · GS papers</p><p class="a-h">Micro-topics</p></div>
+      ${topics.map(([t]) => `<div class="a-card topic"><div class="topic-top"><p>${t}</p><button type="button" class="schip"><i></i><span></span></button></div><div class="steps">${Array.from({ length: 7 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div></div>`).join('')}
+      <div class="a-card" style="padding:12px;display:flex;gap:10px;align-items:center"><div style="width:40px;height:40px;flex:none">${pip()}</div><p style="font-size:11px;color:var(--ink-soft)">The seven bars track the steps from first reading to mastered.</p></div>
+    </div>`;
+  const sy = $('#sylScreen');
+  const sylState = topics.map((t) => t[1]);
+  function sylRender(i, animate) {
+    const card = $$('.topic', sy)[i], step = sylState[i], [label, color] = STATUS[step];
+    const chip = $('.schip', card), span = $('span', chip);
+    chip.style.setProperty('--c', color); span.textContent = label;
+    chip.setAttribute('aria-label', `Status: ${label}. Tap to advance.`);
+    if (animate) restart(span, 'swap');
+    $$('.steps i', card).forEach((s, k) => { s.style.background = k < step ? color : ''; });
+  }
+  $$('.schip', sy).forEach((c, i) => c.addEventListener('click', () => { sylState[i] = (sylState[i] + 1) % STATUS.length; sylRender(i, true); }));
+  topics.forEach((_, i) => sylRender(i, false));
+  demos.syl = () => {
+    (sy._ts || []).forEach(clearTimeout);
+    topics.forEach((t, i) => { sylState[i] = t[1]; sylRender(i, false); });
+    sy._ts = [600, 1300, 2000].map((t, k) => setTimeout(() => { const i = [1, 0, 1][k]; sylState[i] = (sylState[i] + 1) % STATUS.length; sylRender(i, true); }, t));
+  };
+
+  /* ── M10 Undo ── */
+  const sessions = [['GS2', 'Polity · Fundamental Rights', 90], ['GS3', 'Economy · Inflation', 60], ['CA', 'The Hindu editorials', 45]];
+  $('#undoScreen').innerHTML = `
+    <div class="sbar"><span>9:12</span><span>●●● ▮</span></div>
+    <div class="pad" style="display:grid;gap:12px">
+      <div><p class="a-eyebrow">Study · Today</p><p class="a-h">Sessions</p></div>
+      <div class="a-card" style="padding:4px">
+        ${sessions.map(([k, t, m]) => `<div class="tsrow-wrap u-row"><div><div class="tsrow"><i style="background:${SUBJ[k][1]}"></i><span style="min-width:0">${SUBJ[k][0]} · ${t}</span><b>${fmt(m).replace(/ 00m$/, '').replace(/^0h /, '')}</b><button type="button" class="del" aria-label="Delete ${t}">${ICON.trash}</button></div></div></div>`).join('')}
+      </div>
+    </div>
+    <div class="toast" role="status"><span class="tmsg">Session deleted</span><button type="button">Undo</button><span class="cd"></span></div>`;
+  const us = $('#undoScreen'); const toast = $('.toast', us);
+  let lastDel = null;
+  function hideToast() { toast.classList.remove('show'); }
+  function delRow(w) {
+    if (lastDel && lastDel !== w) { /* previous delete becomes final */ }
+    lastDel = w; w.classList.remove('new'); w.classList.add('gone');
+    $('.tmsg', toast).textContent = `${$('.tsrow span', w).textContent.split(' · ')[0]} session deleted`;
+    toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show');
+    clearTimeout(us._t); us._t = setTimeout(() => { hideToast(); lastDel = null; }, 5000);
+  }
+  $$('.u-row', us).forEach((w) => $('.del', w).addEventListener('click', () => delRow(w)));
+  $('button', toast).addEventListener('click', () => {
+    if (!lastDel) return; const w = lastDel; lastDel = null;
+    w.classList.remove('gone'); restart(w, 'new'); clearTimeout(us._t); hideToast();
+  });
+  demos.undo = () => {
+    clearTimeout(us._t); clearTimeout(us._d); hideToast(); lastDel = null;
+    $$('.u-row', us).forEach((w) => w.classList.remove('gone', 'new'));
+    us._d = setTimeout(() => delRow($$('.u-row', us)[1]), 600);
+  };
+
+  /* ── Wire replay + autoplay on first view ── */
+  $$('.mock').forEach((m) => {
+    const name = m.dataset.demo, run = (auto) => demos[name] && demos[name](m, auto);
+    const rb = $('.replay', m); if (rb) rb.addEventListener('click', () => run(true));
+    if (!demos[name]) return;
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.disconnect(); run(true); } }), { threshold: 0.45 });
+    io.observe($('.phone', m));
+  });
+})();
+</script>

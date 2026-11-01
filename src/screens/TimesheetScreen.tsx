@@ -60,7 +60,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
   return (
     <div className="px-4 pt-safe">
       <header className="flex items-center justify-between pb-3 pt-4">
-        <h1 className="text-xl font-extrabold text-ink">Timesheet</h1>
+        <h1 className="font-display text-2xl text-ink">Timesheet</h1>
         <div className="flex gap-2">
           <button className="btn-ghost px-3 py-2" onClick={() => (timer.timer ? timer.openZen() : setTimerOpen(true))}>
             <TimerIcon size={16} /> {timer.timer ? 'Session' : 'Timer'}
@@ -75,7 +75,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
       <div className="mb-3 flex gap-2">
         {(['day', 'week', 'month'] as View[]).map((v) => (
           <button key={v} onClick={() => setView(v)} className={`chip flex-1 justify-center ${view === v ? 'chip-active' : ''}`}>
-            {v === 'day' ? '📅 Day' : v === 'week' ? '🗓️ Week' : '📆 Month'}
+            {v === 'day' ? 'Day' : v === 'week' ? 'Week' : 'Month'}
           </button>
         ))}
       </div>
@@ -100,7 +100,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
 
           <SectionCard title="Sessions" icon={<CalendarDays size={14} />}>
             {dayLogs.length === 0 ? (
-              <EmptyState emoji="🕊️" text="No sessions on this day" sub="Use the timer for live tracking, or Quick Log for library/coaching hours." />
+              <EmptyState text="No sessions on this day" sub="Use the timer for live tracking, or Quick Log for library/coaching hours." />
             ) : (
               <ul className="divide-y divide-line">
                 {dayLogs
@@ -121,7 +121,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
                                 ).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
                               : ' · no time recorded'}
                             {' · '}
-                            {l.mode === 'pomodoro' ? '🍅' : l.mode === 'stopwatch' ? '⏱️' : '✍️'}
+                            {l.mode === 'pomodoro' ? 'Pomodoro' : l.mode === 'stopwatch' ? 'Stopwatch' : 'Logged'}
                           </p>
                         </div>
                         <span className="text-sm font-bold tabular-nums text-ink">{formatMinutes(l.durationMinutes)}</span>
@@ -197,7 +197,7 @@ function SubjectSplit({ entries }: { entries: [string, number][] }) {
   return (
     <SectionCard title="Subject split" icon={<BarChart3 size={14} />}>
       {entries.length === 0 ? (
-        <EmptyState emoji="📊" text="No data yet in this range" />
+        <EmptyState text="No data yet in this range" />
       ) : (
         <ul className="space-y-2.5">
           {entries.map(([subject, mins]) => {

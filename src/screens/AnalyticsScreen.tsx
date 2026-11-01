@@ -64,7 +64,7 @@ export function AnalyticsScreen({ data }: { data: AppData }) {
   return (
     <div className="px-4 pt-safe">
       <header className="pb-3 pt-4">
-        <h1 className="text-xl font-extrabold text-ink">Analytics & Books</h1>
+        <h1 className="font-display text-2xl text-ink">Analytics & Books</h1>
       </header>
 
       <SectionCard title="365-day study heatmap" icon={<CalendarDays size={14} />} className="mb-3">
@@ -72,15 +72,15 @@ export function AnalyticsScreen({ data }: { data: AppData }) {
           <div className="flex gap-[3px]">
             {weeks.map((weekCol, wi) => (
               <div key={wi} className="flex flex-col gap-[3px]">
-                {weekCol.map((day) => (
+                {weekCol.map((day, di) => (
                   <button
                     key={day.date}
                     type="button"
                     disabled={day.minutes < 0}
                     aria-label={`${formatDateWithYear(day.date)}, ${day.minutes > 0 ? formatMinutes(day.minutes) : 'no study'}`}
                     aria-pressed={picked === day.date}
-                    className={`h-4 w-4 rounded-[3px] ${picked === day.date ? 'ring-2 ring-ink' : ''}`}
-                    style={{ background: heatColor(day.minutes) }}
+                    className={`hm-cell h-4 w-4 rounded-[3px] ${picked === day.date ? 'ring-2 ring-ink' : ''}`}
+                    style={{ background: heatColor(day.minutes), ['--d' as string]: wi + di }}
                     onClick={() => day.minutes >= 0 && setPicked(picked === day.date ? null : day.date)}
                   />
                 ))}
@@ -124,7 +124,7 @@ export function AnalyticsScreen({ data }: { data: AppData }) {
 
       <SectionCard title="All-time subject distribution" icon={<BarChart3 size={14} />} className="mb-3">
         {bySubject.length === 0 ? (
-          <EmptyState emoji="📊" text="Log some sessions to see the split" sub="Watch for neglected areas — is CSAT or the Optional getting enough love?" />
+          <EmptyState text="Log some sessions to see the split" sub="Watch for neglected areas — is CSAT or the Optional getting enough love?" />
         ) : (
           <ul className="space-y-2.5">
             {bySubject.map(([subject, mins]) => {
@@ -200,7 +200,7 @@ function ScoresSection({ mocks }: { mocks: MockTestRecord[] }) {
   return (
     <SectionCard title="Test scores" icon={<BarChart3 size={14} />} className="mb-3">
       {mocks.length === 0 ? (
-        <EmptyState emoji="🎯" text="No mocks saved yet" sub="Prelims net, mains average and CSAT qualifying show up here." />
+        <EmptyState text="No mocks saved yet" sub="Prelims net, mains average and CSAT qualifying show up here." />
       ) : (
         <div className="space-y-3">
           <div>

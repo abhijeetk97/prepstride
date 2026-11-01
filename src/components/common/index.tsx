@@ -1,7 +1,10 @@
-import { type ReactNode, useEffect, useId, useRef } from 'react';
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { Pip, type PipMood } from '../mascot/Pip';
+import { currentMotion } from '../../hooks/useMotionPreference';
 
 export { showToast, ToastHost, type ToastOptions } from './Toast';
+export { RankIcon, StreakFlame, ShieldFill } from './icons';
 
 export function SectionCard({
   title,
@@ -49,6 +52,47 @@ export function Modal({
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const titleId = useId();
+  const [drag, setDrag] = useState(0);
+  const dragging = useRef(false);
+  // Stay mounted through the exit animation, showing the last content rather than an emptied panel.
+  const [rendered, setRendered] = useState(open);
+  const lastChildren = useRef(children);
+  const lastTitle = useRef(title);
+  if (open) {
+    lastChildren.current = children;
+    lastTitle.current = title;
+  }
+  const shownChildren = open ? children : lastChildren.current;
+  const shownTitle = open ? title : lastTitle.current;
+  useEffect(() => {
+    if (open) {
+      setRendered(true);
+      setDrag(0);
+      return;
+    }
+    const t = setTimeout(() => setRendered(false), currentMotion() === 'off' ? 0 : 200);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  const dragStart = useRef({ y: 0, t: 0 });
+  const onDragStart = (e: ReactPointerEvent) => {
+    if (window.matchMedia('(min-width: 640px)').matches) return;
+    dragging.current = true;
+    dragStart.current = { y: e.clientY, t: performance.now() };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onDragMove = (e: ReactPointerEvent) => {
+    if (!dragging.current) return;
+    setDrag(Math.max(0, e.clientY - dragStart.current.y));
+  };
+  const onDragEnd = (e: ReactPointerEvent) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    const dy = Math.max(0, e.clientY - dragStart.current.y);
+    const velocity = dy / Math.max(1, performance.now() - dragStart.current.t);
+    if (dy > 110 || velocity > 0.6) onClose();
+    else setDrag(0);
+  };
   useEffect(() => { if (open) dialogRef.current?.focus(); }, [open, title]);
   useEffect(() => {
     if (!open) return;
@@ -78,25 +122,40 @@ export function Modal({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!rendered) return null;
+  const closing = !open;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 animate-fade-in sm:items-center" onClick={onClose}>
+    <div
+      className={`sheet-backdrop fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center ${closing ? 'closing pointer-events-none' : ''}`}
+      onClick={onClose}
+    >
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`max-h-[92vh] w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'} overflow-y-auto rounded-t-3xl bg-paper p-5 pb-safe shadow-2xl animate-slide-up sm:rounded-3xl`}
+        className={`sheet-panel elev-3 max-h-[92vh] w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'} overflow-y-auto rounded-t-3xl bg-paper px-5 pb-safe pt-2 sm:rounded-3xl sm:pt-5 ${closing ? 'closing' : ''}`}
+        style={{ ['--drag' as string]: `${drag}px`, transform: drag && !closing ? `translateY(${drag}px)` : undefined, transition: dragging.current ? 'none' : undefined }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 id={titleId} className="text-base font-bold text-ink">{title}</h3>
-          <button onClick={onClose} className="hit rounded-full text-inksoft hover:bg-surface2" aria-label="Close">
-            <X size={18} />
-          </button>
+        {/* Drag the handle or header down to dismiss (phones). */}
+        <div
+          className="touch-none select-none"
+          onPointerDown={onDragStart}
+          onPointerMove={onDragMove}
+          onPointerUp={onDragEnd}
+          onPointerCancel={onDragEnd}
+        >
+          <div className="mx-auto mb-2 h-1.5 w-10 rounded-full bg-line sm:hidden" aria-hidden />
+          <div className="mb-4 flex items-center justify-between">
+            <h3 id={titleId} className="text-base font-bold text-ink">{shownTitle}</h3>
+            <button onClick={onClose} onPointerDown={(e) => e.stopPropagation()} className="hit rounded-full text-inksoft hover:bg-surface2" aria-label="Close">
+              <X size={18} />
+            </button>
+          </div>
         </div>
-        {children}
+        {shownChildren}
       </div>
     </div>
   );
@@ -142,20 +201,21 @@ export function ProgressBar({ pct, color, className = '' }: { pct: number; color
   );
 }
 
-export function EmptyState({ emoji, text, sub }: { emoji: string; text: string; sub?: string }) {
+export function EmptyState({ mood = 'cheer', text, sub, action }: { mood?: PipMood; text: string; sub?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-1 py-8 text-center">
-      <span className="text-3xl">{emoji}</span>
+    <div className="flex flex-col items-center gap-1 py-6 text-center">
+      <Pip mood={mood} size={64} className="mb-1" />
       <p className="text-sm font-semibold text-ink">{text}</p>
       {sub && <p className="max-w-xs text-xs text-inksoft">{sub}</p>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }
 
-export function StatPill({ label, value, sub }: { label: string; value: string; sub?: string }) {
+export function StatPill({ label, value, sub }: { label: string; value: ReactNode; sub?: string }) {
   return (
     <div className="rounded-xl bg-surface2 px-3 py-2 text-center">
-      <p className="text-lg font-extrabold leading-tight text-ink [overflow-wrap:anywhere]">{value}</p>
+      <p className="font-display flex items-center justify-center gap-1 text-lg leading-tight text-ink [overflow-wrap:anywhere]">{value}</p>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-inksoft">{label}</p>
       {sub && <p className="text-[10px] leading-tight text-inksoft [overflow-wrap:anywhere]">{sub}</p>}
     </div>
@@ -203,27 +263,30 @@ export function ProgressRing({
   );
 }
 
-/** Lightweight CSS confetti burst (no dependency). */
-export function ConfettiBurst({ show }: { show: boolean }) {
+const FEATHER_COLORS = ['#F7616E', '#FBB52C', '#1EA4E0', '#8DCB45'];
+
+/**
+ * A few feathers in Pip's wing colours drift down once (replaces confetti). Hidden under the
+ * Calm and Off tiers; never blocks taps.
+ */
+export function FeatherBurst({ show, count = 12 }: { show: boolean; count?: number }) {
   if (!show) return null;
-  const pieces = Array.from({ length: 24 }, (_, i) => i);
-  const colors = ['#E8A33D', '#F49FB6', '#7EC8E3', '#8AB17D', '#D4A94E', '#E07A5F'];
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-      {pieces.map((i) => (
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-72 overflow-hidden" aria-hidden>
+      {Array.from({ length: count }, (_, i) => (
         <span
           key={i}
-          className="absolute block h-2 w-2 rounded-[2px]"
+          className="feather"
           style={{
-            left: `${(i * 41) % 100}%`,
-            top: '-4%',
-            background: colors[i % colors.length],
-            animation: `confettiFall ${1.6 + (i % 5) * 0.35}s ${(i % 7) * 0.09}s cubic-bezier(0.3, 0.6, 0.7, 1) forwards`,
-            transform: `rotate(${i * 33}deg)`
+            left: `${8 + ((i * 37) % 84)}%`,
+            background: FEATHER_COLORS[i % FEATHER_COLORS.length],
+            animationDelay: `${(i % 6) * 110}ms`,
+            ['--fall' as string]: `${2.4 + (i % 5) * 0.25}s`,
+            ['--sway' as string]: `${i % 2 ? -1 : 1}${14 + (i % 4) * 8}px`,
+            ['--spin' as string]: `${i % 2 ? -1 : 1}${120 + (i % 3) * 60}deg`
           }}
         />
       ))}
-      <style>{`@keyframes confettiFall { 0% { transform: translateY(0) rotate(0); opacity: 1 } 100% { transform: translateY(105vh) rotate(540deg); opacity: 0.6 } }`}</style>
     </div>
   );
 }

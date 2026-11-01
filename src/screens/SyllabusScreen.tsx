@@ -87,7 +87,7 @@ export function SyllabusScreen({ data }: { data: AppData }) {
   return (
     <div className="px-4 pt-safe">
       <header className="flex items-center justify-between pb-3 pt-4">
-        <h1 className="text-xl font-extrabold text-ink">Syllabus & Revision</h1>
+        <h1 className="font-display text-2xl text-ink">Syllabus & Revision</h1>
         <button className="btn-ghost px-3 py-2" onClick={() => setOptionalOpen(true)}>
           <Layers size={15} /> Optional
         </button>
@@ -96,7 +96,7 @@ export function SyllabusScreen({ data }: { data: AppData }) {
       {/* Mode switch */}
       <div className="mb-3 flex gap-2">
         <button onClick={() => setMode('checklist')} className={`chip flex-1 justify-center ${mode === 'checklist' ? 'chip-active' : ''}`}>
-          📚 Micro-topic checklist
+          Micro-topic checklist
         </button>
           <button onClick={() => setMode('revision')} className={`chip flex-1 justify-center ${mode === 'revision' ? 'chip-active' : ''}`}>
             <RefreshCw size={14} />
@@ -141,7 +141,6 @@ export function SyllabusScreen({ data }: { data: AppData }) {
           {/* Topic list */}
           {byCategory.length === 0 ? (
             <EmptyState
-              emoji="🔍"
               text={hasOptional ? 'No topics match your search' : 'No optional topics loaded yet'}
               sub={hasOptional ? undefined : 'Tap "Optional" above to load a template (PSIR, Sociology…) or add custom topics.'}
             />
@@ -196,7 +195,7 @@ export function SyllabusScreen({ data }: { data: AppData }) {
           <SectionCard title={`Stale (${staleTopics.length})`} icon={<AlertTriangle size={14} />} className="mb-6">
             <p className="mb-2 text-[11px] text-inksoft">Past their due date, or read more than 14 days ago with no revision yet.</p>
             {staleTopics.length === 0 ? (
-              <EmptyState emoji="✨" text="No stale topics" sub="Read topics land here once a due date passes, or after 14 days with zero revisions." />
+              <EmptyState text="No stale topics" sub="Read topics land here once a due date passes, or after 14 days with zero revisions." />
             ) : (
               <ul className="space-y-2">
                 {staleTopics.map((i) => (
@@ -304,11 +303,11 @@ function CategoryBlock({
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] leading-snug text-ink">{i.microTopic}</p>
                 {i.priority === 'high' && <span className="text-[10px] font-bold text-[#C0503C]">● high yield</span>}
-                {isTopicStale(i, todayISO()) && <span className="ml-1 text-[10px] font-bold text-[#D4A94E]">⚠ stale</span>}
+                {isTopicStale(i, todayISO()) && <span className="ml-1 text-[10px] font-bold text-[#D4A94E]">Stale</span>}
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-1">
                 <button
-                  className="min-h-11 min-w-[8.5rem] rounded-xl px-2.5 py-1 text-left"
+                  className="press min-h-11 min-w-[8.5rem] overflow-hidden rounded-xl px-2.5 py-1 text-left transition-[border-color] duration-300"
                   style={{ background: '#F4EFE6', color: '#2C2416', border: `2px solid ${STATUS_META[i.status].color}` }}
                   onClick={() => {
                     if (skipClick.current) {
@@ -332,9 +331,11 @@ function CategoryBlock({
                     window.addEventListener('pointercancel', up, { once: true });
                   }}
                 >
-                  <span className="block text-xs font-bold leading-tight">{STATUS_META[i.status].label}</span>
-                  <span className="block text-xs font-semibold leading-tight" style={{ color: '#5C5346' }}>
-                    Next: {nextStatusLabel(i.status)}
+                  <span key={i.status} className="morph-in block">
+                    <span className="block text-xs font-bold leading-tight">{STATUS_META[i.status].label}</span>
+                    <span className="block text-xs font-semibold leading-tight" style={{ color: '#5C5346' }}>
+                      Next: {nextStatusLabel(i.status)}
+                    </span>
                   </span>
                 </button>
                 {menuId === i.id && (

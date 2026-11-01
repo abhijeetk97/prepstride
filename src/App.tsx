@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useAppData } from './hooks/useAppData';
 import { db } from './db';
 import { seedIfEmpty } from './db/seed';
@@ -14,6 +15,7 @@ import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { Modal, ToastHost } from './components/common';
 import { Pip } from './components/mascot/Pip';
 import { useTimerLive } from './hooks/useTimer';
+import { currentMotion, useMotionPreference } from './hooks/useMotionPreference';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { TimesheetScreen } from './screens/TimesheetScreen';
 import { SyllabusScreen } from './screens/SyllabusScreen';
@@ -50,10 +52,18 @@ export default function App() {
   const data = useAppData();
   const timerLive = useTimerLive();
 
+  useMotionPreference(data.settings.motion);
+
+  // Screen changes cross-fade through the View Transitions API where it exists; instant otherwise.
   const navigate = useCallback((r: Route) => {
-    window.location.hash = `/${r}`;
-    setRoute(r);
-    window.scrollTo({ top: 0 });
+    const go = () => {
+      window.location.hash = `/${r}`;
+      setRoute(r);
+      window.scrollTo({ top: 0 });
+    };
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    if (!doc.startViewTransition || currentMotion() === 'off') return go();
+    doc.startViewTransition(() => flushSync(go));
   }, []);
 
   useEffect(() => {
@@ -168,9 +178,11 @@ export default function App() {
 
   if (!ready || data.loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-paper">
-        <Pip mood="wave" size={110} />
-        <p className="text-sm font-semibold text-inksoft">PrepStride is waking Pip up…</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-paper" role="status">
+        <div className="relative flex h-40 w-40 items-center justify-center rounded-full border-[10px] border-surface2">
+          <Pip mood="celebrate" size={104} className="-mt-2" />
+        </div>
+        <span className="sr-only">Loading PrepStride</span>
       </div>
     );
   }
@@ -209,7 +221,7 @@ export default function App() {
       <BottomNav route={route} navigate={navigate} />
       <ToastHost />
 
-      <Modal open={showBackupNudge} onClose={() => { setShowBackupNudge(false); sessionStorage.setItem('prepstride_backup_nudge', String(Date.now())); }} title="Weekly backup nudge 🕊️">
+      <Modal open={showBackupNudge} onClose={() => { setShowBackupNudge(false); sessionStorage.setItem('prepstride_backup_nudge', String(Date.now())); }} title="Weekly backup nudge">
         <div className="flex flex-col items-center gap-3 text-center">
           <Pip mood="sleep" size={80} />
           <p className="text-sm text-ink">

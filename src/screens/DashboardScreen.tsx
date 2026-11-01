@@ -5,7 +5,10 @@ import { toBlob } from 'html-to-image';
 import type { AppData } from '../hooks/useAppData';
 import type { Route } from '../App';
 import { DAILY_TARGET_CHIPS, db, setDailyTarget } from '../db';
-import { ProgressRing, SectionCard, StarRating, StatPill, ConfettiBurst, Modal } from '../components/common';
+import { SectionCard, StarRating, StatPill, FeatherBurst, Modal, RankIcon, StreakFlame, ShieldFill } from '../components/common';
+import { SegmentedRing } from '../components/motion/SegmentedRing';
+import { CountUp } from '../components/motion/CountUp';
+import { claimDailyCelebration, ringSegments } from '../utils/motion';
 import { Pip } from '../components/mascot/Pip';
 import { ShareCard } from '../components/partner/ShareCard';
 import { RetroLogModal } from '../components/timesheet/RetroLogModal';
@@ -25,7 +28,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
   const [retroOpen, setRetroOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [confetti, setConfetti] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
   const [answerOpen, setAnswerOpen] = useState(false);
 
   const todayMinutes = useMemo(
@@ -33,7 +36,6 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
     [data.timeLogs, today]
   );
   const targetMinutes = data.todayTargetMinutes;
-  const ringPct = Math.min(100, (todayMinutes / Math.max(1, targetMinutes)) * 100);
   const goalMet = todayMinutes >= targetMinutes;
 
   const tier = levelForXP(data.xp.total);
@@ -50,30 +52,40 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
     [data.timeLogs, today]
   );
 
+  // Ring segments: one per subject, in the order they were first logged today.
+  const segments = useMemo(() => {
+    const order: string[] = [];
+    const minutes = new Map<string, number>();
+    for (const l of todayLogs) {
+      if (!minutes.has(l.subject)) order.push(l.subject);
+      minutes.set(l.subject, (minutes.get(l.subject) ?? 0) + l.durationMinutes);
+    }
+    return ringSegments(
+      order.map((k) => ({ key: k, color: SUBJECT_META[k as keyof typeof SUBJECT_META]?.color ?? 'rgb(var(--c-brand))', minutes: minutes.get(k) ?? 0 })),
+      targetMinutes
+    );
+  }, [todayLogs, targetMinutes]);
+
   const firstRun = data.timeLogs.length === 0;
   const rituals = data.todayRituals;
   const hour = new Date().getHours();
   const greeting = hour < 5 ? 'Still up' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const tod = hour >= 5 && hour < 9 ? 'tod-dawn' : hour >= 9 && hour < 17 ? 'tod-day' : hour >= 17 && hour < 20 ? 'tod-dusk' : 'tod-night';
 
-  // One-time daily-goal celebration
+  // The single daily celebration: ring glow, Pip flaps and hops, a few feathers. Done by 4s.
   useEffect(() => {
-    if (goalMet && todayMinutes > 0 && !localStorage.getItem(`celebrated_${today}`)) {
-      localStorage.setItem(`celebrated_${today}`, '1');
-      setConfetti(true);
-      const t = setTimeout(() => setConfetti(false), 2800);
+    if (claimDailyCelebration(today, todayMinutes, targetMinutes, localStorage)) {
+      setCelebrating(true);
+      const t = setTimeout(() => setCelebrating(false), 4000);
       return () => clearTimeout(t);
     }
-  }, [goalMet, todayMinutes, today]);
+  }, [todayMinutes, targetMinutes, today]);
 
   const setTarget = (mins: number) => setDailyTarget(mins);
 
   const toggleRitual = async (patch: Partial<DailyRituals>) => {
     if (!rituals) return;
     await db.dailyRituals.put({ ...rituals, ...patch });
-    if (goalMet) {
-      setConfetti(true);
-      setTimeout(() => setConfetti(false), 2600);
-    }
   };
 
   const ritualDone = (r?: DailyRituals) =>
@@ -116,33 +128,44 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
 
   return (
     <div className="relative px-4 pt-safe">
-      <ConfettiBurst show={confetti} />
+      <FeatherBurst show={celebrating} />
+      <div className={`tod-wash ${tod}`} aria-hidden />
 
-      {/* ─── Greeting + Pip ─── */}
-      <header className="flex items-center gap-3 pb-2 pt-4">
+      {/* ─── Greeting + Pip (the only Pip on Home) ─── */}
+      <header className="rise relative flex items-center gap-3 pb-2 pt-4" style={{ ['--i' as string]: 0 }}>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-inksoft">{formatDateLong(today)}</p>
-          <h1 className="truncate text-xl font-extrabold text-ink">
+          <h1 className="font-display truncate text-[1.4rem] leading-tight text-ink">
             {greeting}, {data.settings.aspirantName}!
           </h1>
           {dday !== null && (
-            <p className="mt-0.5 text-xs font-bold text-brand">
+            <p className="mt-0.5 flex items-center gap-1 text-xs font-bold text-brand">
+              <Target size={13} strokeWidth={2.2} aria-hidden />
               {dday > 0
-                ? `🎯 Prelims: ${countdownOfficial ? '' : 'expected '}${countdownDate} · ${dday} days`
+                ? `Prelims: ${countdownOfficial ? '' : 'expected '}${countdownDate} · ${dday} days`
                 : dday === 0
-                  ? '🎯 Exam day — all the best!'
+                  ? 'Exam day — all the best!'
                   : 'Prelims done. Onward!'}
             </p>
           )}
         </div>
-        <Pip mood={goalMet ? 'celebrate' : data.streak.shieldUsedForYesterday ? 'sleep' : 'cheer'} xp={data.xp.total} size={72} />
+        {!firstRun && (
+          <Pip
+            key={celebrating ? 'celebrate' : 'idle'}
+            mood={celebrating ? 'celebrate' : data.streak.shieldUsedForYesterday ? 'sleep' : 'cheer'}
+            xp={data.xp.total}
+            size={76}
+          />
+        )}
       </header>
 
-      <WeeklyPlannerCard data={data} navigate={navigate} />
+      <div className="rise relative" style={{ ['--i' as string]: 1 }}>
+        <WeeklyPlannerCard data={data} navigate={navigate} />
+      </div>
 
       {firstRun && (
-        <section className="card flex flex-col items-center gap-3 p-6 text-center">
-          <Pip mood="wave" size={96} />
+        <section className="card elev-2 rise relative flex flex-col items-center gap-3 p-6 text-center" style={{ ['--i' as string]: 2 }}>
+          <Pip mood="wave" xp={data.xp.total} size={104} />
           <h2 className="text-lg font-extrabold text-ink">Log your first session</h2>
           <p className="max-w-[18rem] text-xs leading-relaxed text-inksoft">
             Newspaper, MCQs and answer writing show up as rituals once a session is on the record. Streak, rank and shields wait until then.
@@ -165,21 +188,36 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
       {!firstRun && (
       <>
       {/* ─── Progress ring ─── */}
-      <section className="card relative flex flex-col items-center gap-3 p-5">
-        <ProgressRing pct={ringPct} size={190} stroke={14}>
-          <Pip mood={goalMet ? 'celebrate' : 'cheer'} size={64} className="-mt-1" />
-          <p className="mt-1 text-2xl font-extrabold tabular-nums text-ink">{formatMinutes(todayMinutes)}</p>
-          <p className="text-[11px] font-semibold text-inksoft">today · target {formatMinutes(targetMinutes)}</p>
-        </ProgressRing>
+      <section className="card elev-2 rise relative flex flex-col items-center gap-3 p-5" style={{ ['--i' as string]: 2 }}>
+        <SegmentedRing segments={segments} size={196} stroke={14} glow={celebrating}>
+          <CountUp value={todayMinutes} format={formatMinutes} className="font-display text-[2.1rem] leading-none text-ink" />
+          <p className="mt-1.5 text-[11px] font-semibold text-inksoft">today · target {formatMinutes(targetMinutes)}</p>
+          {!goalMet && todayMinutes > 0 && (
+            <p className="mt-0.5 text-[11px] font-bold text-brand">{formatMinutes(targetMinutes - todayMinutes)} to go</p>
+          )}
+        </SegmentedRing>
+
+        {segments.length > 1 && (
+          <ul className="flex flex-wrap justify-center gap-x-3 gap-y-1" aria-label="Today by subject">
+            {segments.map((sg) => (
+              <li key={sg.key} className="flex items-center gap-1 text-[11px] font-semibold text-inksoft">
+                <span className="h-2 w-2 rounded-full" style={{ background: sg.color }} />
+                {SUBJECT_META[sg.key as keyof typeof SUBJECT_META]?.short ?? sg.key}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {goalMet ? (
-          <p className="text-center text-sm font-bold text-brand">🎉 Target crushed today! You're unstoppable!</p>
+          <p className="text-center text-sm font-bold text-brand">
+            Target met · {formatMinutes(todayMinutes)} across {segments.length} subject{segments.length === 1 ? '' : 's'}
+          </p>
         ) : (
           <p className="max-w-[16rem] text-center text-xs italic text-inksoft">"{quoteOfTheDay(today)}"</p>
         )}
 
         <div className="flex w-full gap-2">
-          <button className="btn-primary flex-1" onClick={() => (timer.timer ? timer.openZen() : setTimerOpen(true))}>
+          <button className="btn-primary press flex-1" onClick={() => (timer.timer ? timer.openZen() : setTimerOpen(true))}>
             <Play size={16} fill="currentColor" /> {timer.timer ? 'Back to session' : 'Start timer'}
           </button>
           <button className="btn-ghost flex-1" onClick={() => setRetroOpen(true)}>
@@ -189,10 +227,14 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
       </section>
 
       {/* ─── Rank / streak / shields ─── */}
-      <section className="mt-3 grid grid-cols-3 gap-2">
+      <section className="rise mt-3 grid grid-cols-3 gap-2" style={{ ['--i' as string]: 3 }}>
         <StatPill
           label="Streak"
-          value={`${data.streak.currentStreak} 🔥`}
+          value={
+            <>
+              {data.streak.currentStreak} <StreakFlame days={data.streak.currentStreak} />
+            </>
+          }
           sub={
             data.streak.currentStreak > 0
               ? data.streak.currentStreak === 1
@@ -203,10 +245,22 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
                 : 'log a session'
           }
         />
-        <StatPill label="Rank" value={`${tier.level} ${tier.accessoryEmoji}`} sub={tier.title} />
+        <StatPill
+          label="Rank"
+          value={
+            <>
+              {tier.level} <RankIcon accessory={tier.mascotAccessory} size={17} className="text-brand" />
+            </>
+          }
+          sub={tier.title}
+        />
         <StatPill
           label="Shields"
-          value={`${data.streak.shields} 🛡️`}
+          value={
+            <>
+              {data.streak.shields} <ShieldFill progress={data.streak.daysTowardShield / 7} />
+            </>
+          }
           sub={`${7 - data.streak.daysTowardShield} target-day${7 - data.streak.daysTowardShield === 1 ? '' : 's'}`}
         />
       </section>
@@ -216,7 +270,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
         </p>
       )}
 
-      <SectionCard title="Rank progress" icon={<Trophy size={14} />} className="mt-3">
+      <SectionCard title="Rank progress" icon={<Trophy size={14} />} className="rise mt-3 [--i:4]">
         <div className="flex items-center justify-between text-xs font-semibold text-ink">
           <span>{tier.title}</span>
           <span className="text-inksoft">
@@ -228,7 +282,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
         </div>
         {prog.next && (
           <p className="mt-1.5 text-[11px] text-inksoft">
-            {prog.toNext} XP to <b>{prog.next.title}</b> {prog.next.accessoryEmoji}
+            {prog.toNext} XP to <b>{prog.next.title}</b>
           </p>
         )}
       </SectionCard>
@@ -350,7 +404,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
       </button>
       <p className="mb-4 mt-2 text-center text-[11px] text-inksoft">
         {data.todayRecord?.partnerSharedAt
-          ? `Last shared ${new Date(data.todayRecord.partnerSharedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} 💛`
+          ? `Last shared ${new Date(data.todayRecord.partnerSharedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
           : 'A beautiful card with Pip, hours, rituals & mood — in 1 tap.'}
       </p>
 
@@ -376,7 +430,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
       </div>
 
       {/* Share preview modal */}
-      <Modal open={shareOpen} onClose={() => setShareOpen(false)} title={`Send to ${data.settings.partnerName} 💛`} wide>
+      <Modal open={shareOpen} onClose={() => setShareOpen(false)} title={`Send to ${data.settings.partnerName}`} wide>
         <div className="mb-4 rounded-xl" style={{ zoom: 0.55 }}>
           <ShareCard digest={digest} settings={data.settings} />
         </div>
@@ -476,17 +530,17 @@ function RitualRow({ label, checked, onToggle }: { label: string; checked?: bool
   return (
     <button onClick={() => onToggle(!checked)} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left active:bg-surface2">
       <span
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-          checked ? 'border-brand bg-brand text-white' : 'border-line bg-surface'
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors duration-150 ${
+          checked ? 'check-box-on border-brand bg-brand text-white' : 'border-line bg-surface'
         }`}
       >
         {checked && (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2">
-            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" aria-hidden>
+            <path className="check-path" d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </span>
-      <span className={`text-sm ${checked ? 'text-inksoft line-through' : 'text-ink'}`}>{label}</span>
+      <span className={`text-sm transition-colors duration-200 ${checked ? 'text-inksoft line-through' : 'text-ink'}`}>{label}</span>
     </button>
   );
 }

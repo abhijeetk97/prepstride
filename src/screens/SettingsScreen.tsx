@@ -1,19 +1,27 @@
 import { useRef, useState } from 'react';
-import { Settings as SettingsIcon, Palette, Download, Upload, Check, Volume2 } from 'lucide-react';
+import { Settings as SettingsIcon, Palette, Download, Upload, Check, Volume2, Sparkles } from 'lucide-react';
 import type { AppData } from '../hooks/useAppData';
 import { DAILY_TARGET_MAX, DAILY_TARGET_MIN, DAILY_TARGET_STEP, db, setDailyTarget } from '../db';
 import { applyBackup, exportBackup } from '../db/backup';
 import { Modal, SectionCard, showToast } from '../components/common';
 import { formatDateShort } from '../utils/dates';
 import { parseBackupText, summarizeBackup, type BackupPreview } from '../utils/backupParse';
-import type { ThemeName } from '../types';
+import type { MotionSetting, ThemeName } from '../types';
 
-const THEMES: { id: ThemeName; label: string; emoji: string; note: string }[] = [
-  { id: 'warm-paper', label: 'Warm Parchment', emoji: '📜', note: 'Sepia reader' },
-  { id: 'midnight', label: 'Old Rajinder Nagar Midnight', emoji: '🌙', note: 'Focus dark' },
-  { id: 'mussoorie-mist', label: 'Mussoorie Mist', emoji: '🌲', note: 'Forest calm' },
-  { id: 'zen-forest', label: 'Zen Forest', emoji: '🍃', note: 'Deep green' },
-  { id: 'lbsnaa-gold', label: 'LBSNAA Gold', emoji: '🏅', note: 'Celebratory' }
+// Swatches mirror the palettes in index.css: paper, brand, accent.
+const THEMES: { id: ThemeName; label: string; swatch: [string, string, string]; note: string }[] = [
+  { id: 'warm-paper', label: 'Warm Parchment', swatch: ['#FBF9F5', '#D8942E', '#7EC8E3'], note: 'Sepia reader' },
+  { id: 'midnight', label: 'Old Rajinder Nagar Midnight', swatch: ['#16171B', '#E8B75A', '#8FD0EE'], note: 'Focus dark' },
+  { id: 'mussoorie-mist', label: 'Mussoorie Mist', swatch: ['#F0F4F3', '#4E8D6E', '#C9A227'], note: 'Forest calm' },
+  { id: 'zen-forest', label: 'Zen Forest', swatch: ['#1A211C', '#7FBF9B', '#C9A227'], note: 'Deep green' },
+  { id: 'lbsnaa-gold', label: 'LBSNAA Gold', swatch: ['#FBF4E2', '#B98A2F', '#8A6D1F'], note: 'Celebratory' }
+];
+
+const MOTION_OPTIONS: { id: MotionSetting; label: string; note: string }[] = [
+  { id: 'system', label: 'System', note: 'Full, or Calm when your phone asks for reduced motion' },
+  { id: 'full', label: 'Full', note: 'Pip moves, numbers count up, screens glide' },
+  { id: 'calm', label: 'Calm', note: 'Fades and progress fills only. No movement or loops' },
+  { id: 'off', label: 'Off', note: 'Instant changes. Numbers show their final value' }
 ];
 
 export function SettingsScreen({ data, onRunSetup }: { data: AppData; onRunSetup: () => void }) {
@@ -52,7 +60,7 @@ export function SettingsScreen({ data, onRunSetup }: { data: AppData; onRunSetup
   return (
     <div className="px-4 pt-safe">
       <header className="pb-3 pt-4">
-        <h1 className="flex items-center gap-2 text-xl font-extrabold text-ink">
+        <h1 className="font-display flex items-center gap-2 text-2xl text-ink">
           <SettingsIcon size={20} /> Settings & Data
         </h1>
       </header>
@@ -155,7 +163,11 @@ export function SettingsScreen({ data, onRunSetup }: { data: AppData; onRunSetup
                 onClick={() => void patch({ theme: t.id })}
                 className={`min-h-11 rounded-xl border p-3 text-left transition-colors ${active ? 'border-brand bg-brandsoft/40' : 'border-line'}`}
               >
-                <p className="text-lg">{t.emoji}</p>
+                <span className="mb-1.5 flex gap-1" aria-hidden>
+                  {t.swatch.map((c) => (
+                    <span key={c} className="h-4 w-4 rounded-full ring-1 ring-black/10" style={{ background: c }} />
+                  ))}
+                </span>
                 <p className="text-xs font-bold text-ink">{t.label}</p>
                 <p className="text-[10px] text-inksoft">{t.note}</p>
                 {active && (
@@ -167,6 +179,27 @@ export function SettingsScreen({ data, onRunSetup }: { data: AppData; onRunSetup
             );
           })}
         </div>
+      </SectionCard>
+
+      {/* Motion */}
+      <SectionCard title="Motion" icon={<Sparkles size={14} />} className="mb-3">
+        <div className="grid grid-cols-4 gap-1 rounded-xl bg-surface2 p-1" role="radiogroup" aria-label="Motion">
+          {MOTION_OPTIONS.map((m) => {
+            const active = (s.motion ?? 'system') === m.id;
+            return (
+              <button
+                key={m.id}
+                role="radio"
+                aria-checked={active}
+                onClick={() => void patch({ motion: m.id })}
+                className={`min-h-11 rounded-lg text-xs font-bold transition-colors ${active ? 'bg-surface text-ink shadow-sm' : 'text-inksoft'}`}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-[11px] text-inksoft">{MOTION_OPTIONS.find((m) => m.id === (s.motion ?? 'system'))?.note}</p>
       </SectionCard>
 
       {/* Data sovereignty */}

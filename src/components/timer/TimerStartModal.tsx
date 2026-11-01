@@ -52,10 +52,10 @@ export function TimerStartModal({
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => setMode('pomodoro')} aria-pressed={mode === 'pomodoro'} className={`chip justify-center py-2.5 ${mode === 'pomodoro' ? 'chip-active' : ''}`}>
-            🍅 Pomodoro
+            Pomodoro
           </button>
           <button onClick={() => setMode('stopwatch')} aria-pressed={mode === 'stopwatch'} className={`chip justify-center py-2.5 ${mode === 'stopwatch' ? 'chip-active' : ''}`}>
-            ⏱️ Stopwatch
+            Stopwatch
           </button>
         </div>
 

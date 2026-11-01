@@ -19,7 +19,7 @@ export function MoreScreen({ data, navigate }: { data: AppData; navigate: (r: Ro
       <header className="flex items-center gap-3 pb-4 pt-4">
         <Pip mood="wave" xp={data.xp.total} size={68} />
         <div>
-          <h1 className="text-xl font-extrabold text-ink">More</h1>
+          <h1 className="font-display text-2xl text-ink">More</h1>
           <p className="text-xs text-inksoft">Everything else Pip has tucked away</p>
         </div>
       </header>

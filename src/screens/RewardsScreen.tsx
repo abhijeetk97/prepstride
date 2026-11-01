@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Trophy, Shield, Gift, Plus, Lock, Check, Trash2 } from 'lucide-react';
+import { Trophy, Shield, Gift, Plus, Lock, Check, Trash2, Hourglass, ListChecks, Repeat, FileText, type LucideIcon } from 'lucide-react';
 import type { AppData } from '../hooks/useAppData';
 import { db } from '../db';
-import { SectionCard, ProgressBar, Modal, ConfettiBurst } from '../components/common';
+import { SectionCard, ProgressBar, Modal, FeatherBurst, RankIcon } from '../components/common';
 import { Pip } from '../components/mascot/Pip';
 import { LEVEL_THRESHOLDS, levelForXP, nextLevelProgress } from '../utils/gamification';
 import { redeemPartnerTreat, treatBlurb } from '../utils/share';
@@ -29,15 +29,15 @@ export function RewardsScreen({ data }: { data: AppData }) {
 
   return (
     <div className="relative px-4 pt-safe">
-      <ConfettiBurst show={confetti} />
+      <FeatherBurst show={confetti} />
 
       <header className="flex items-center gap-3 pb-3 pt-4">
-        <Pip mood="celebrate" xp={data.xp.total} size={76} />
+        <Pip mood="wave" xp={data.xp.total} size={80} />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-extrabold leading-tight text-ink">Rank {tier.level}</h1>
+          <h1 className="font-display text-2xl leading-tight text-ink">Rank {tier.level}</h1>
           <p className="text-sm font-bold leading-snug text-ink [overflow-wrap:anywhere]">{tier.title}</p>
-          <p className="text-xs font-semibold text-inksoft">
-            {data.xp.total.toLocaleString()} XP earned · {tier.accessoryEmoji} {tier.mascotAccessory}
+          <p className="flex items-center gap-1 text-xs font-semibold text-inksoft">
+            {data.xp.total.toLocaleString()} XP earned · <RankIcon accessory={tier.mascotAccessory} size={13} /> {tier.mascotAccessory.replace('_', ' ')}
           </p>
         </div>
       </header>
@@ -48,7 +48,7 @@ export function RewardsScreen({ data }: { data: AppData }) {
           <div className="mb-2">
             <ProgressBar pct={prog.pct} />
             <p className="mt-1 text-[11px] text-inksoft">
-              {prog.toNext} XP to <b>{prog.next.title}</b> {prog.next.accessoryEmoji}
+              {prog.toNext} XP to <b>{prog.next.title}</b>
             </p>
           </div>
         )}
@@ -57,7 +57,9 @@ export function RewardsScreen({ data }: { data: AppData }) {
             const reached = data.xp.total >= t.minXP;
             return (
               <li key={t.level} className={`flex items-center gap-3 rounded-xl px-3 py-2 ${t.level === tier.level ? 'bg-brandsoft/60' : ''}`}>
-                <span className={`text-lg ${reached ? '' : 'grayscale opacity-40'}`}>{t.accessoryEmoji}</span>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${reached ? 'bg-brandsoft text-brand' : 'bg-surface2 text-inksoft opacity-50'}`}>
+                  <RankIcon accessory={t.mascotAccessory} size={16} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className={`text-sm font-bold ${reached ? 'text-ink' : 'text-inksoft'}`}>
                     Rank {t.level} · {t.title}
@@ -70,10 +72,10 @@ export function RewardsScreen({ data }: { data: AppData }) {
           })}
         </ul>
         <div className="mt-3 grid grid-cols-4 gap-2 border-t border-line pt-3 text-center">
-          <MiniXP label="Study" xp={data.xp.study} emoji="⏳" />
-          <MiniXP label="Rituals" xp={data.xp.rituals} emoji="✅" />
-          <MiniXP label="Revision" xp={data.xp.revisions} emoji="🔁" />
-          <MiniXP label="Mocks" xp={data.xp.mocks} emoji="📝" />
+          <MiniXP label="Study" xp={data.xp.study} Icon={Hourglass} />
+          <MiniXP label="Rituals" xp={data.xp.rituals} Icon={ListChecks} />
+          <MiniXP label="Revision" xp={data.xp.revisions} Icon={Repeat} />
+          <MiniXP label="Mocks" xp={data.xp.mocks} Icon={FileText} />
         </div>
       </SectionCard>
 
@@ -81,22 +83,22 @@ export function RewardsScreen({ data }: { data: AppData }) {
       <SectionCard title="Streak shields — rest day grace" icon={<Shield size={14} />} className="mb-3">
         <div className="mb-2 flex items-center justify-center gap-2">
           {[0, 1, 2].map((i) => (
-            <span key={i} className={`text-2xl transition-all ${i < data.streak.shields ? '' : 'grayscale opacity-25'}`} aria-label={i < data.streak.shields ? 'Shield available' : 'Empty slot'}>
-              🛡️
+            <span key={i} role="img" className={`transition-opacity ${i < data.streak.shields ? 'text-accent' : 'text-inksoft opacity-30'}`} aria-label={i < data.streak.shields ? 'Shield available' : 'Empty slot'}>
+              <Shield size={28} strokeWidth={1.9} fill={i < data.streak.shields ? 'currentColor' : 'none'} fillOpacity={0.35} />
             </span>
           ))}
         </div>
         <p className="text-center text-xs text-inksoft">
-          {data.streak.shields}/3 shields · {7 - data.streak.daysTowardShield} more target-met days to earn the next one.
+          {data.streak.shields}/3 shields · {7 - data.streak.daysTowardShield} more target-met day{7 - data.streak.daysTowardShield === 1 ? '' : 's'} to earn the next one.
           <br />
-          Current streak <b className="text-ink">{data.streak.currentStreak} days</b> · longest <b className="text-ink">{data.streak.longestStreak} days</b>
+          Current streak <b className="text-ink">{data.streak.currentStreak} day{data.streak.currentStreak === 1 ? '' : 's'}</b> · longest <b className="text-ink">{data.streak.longestStreak} day{data.streak.longestStreak === 1 ? '' : 's'}</b>
         </p>
         <div className="mt-2 flex justify-center">
           <Pip mood={data.streak.shieldUsedForYesterday ? 'sleep' : 'cheer'} size={56} />
         </div>
         {data.streak.shieldUsedForYesterday && (
           <p className="text-center text-[11px] font-semibold text-brand">
-            A shield quietly protected yesterday's rest. Recovery is part of the strategy. 🍃
+            A shield quietly protected yesterday's rest. Recovery is part of the strategy.
           </p>
         )}
       </SectionCard>
@@ -132,7 +134,7 @@ export function RewardsScreen({ data }: { data: AppData }) {
           </button>
         }
       >
-        <p className="mb-3 text-[11px] text-inksoft">Real-world couple rewards — milestones turn into quality time. 💛</p>
+        <p className="mb-3 text-[11px] text-inksoft">Real-world couple rewards — milestones turn into quality time.</p>
         <ul className="space-y-2">
           {[...data.treats]
             .sort((a, b) => a.requiredXP - b.requiredXP)
@@ -153,7 +155,7 @@ export function RewardsScreen({ data }: { data: AppData }) {
                         </span>
                       ) : (
                         <button className="btn-primary shrink-0 px-3 py-1.5 text-xs" onClick={() => setRedeemConfirm(t)}>
-                          Redeem 💛
+                          Redeem
                         </button>
                       )
                     ) : (
@@ -178,7 +180,7 @@ export function RewardsScreen({ data }: { data: AppData }) {
       </SectionCard>
 
       {/* Redeem confirm */}
-      <Modal open={redeemConfirm !== null} onClose={() => setRedeemConfirm(null)} title="Redeem this treat? 💛">
+      <Modal open={redeemConfirm !== null} onClose={() => setRedeemConfirm(null)} title="Redeem this treat?">
         {redeemConfirm && (
           <div className="space-y-3 text-center">
             <span className="text-4xl">{redeemConfirm.icon}</span>
@@ -204,10 +206,10 @@ export function RewardsScreen({ data }: { data: AppData }) {
   );
 }
 
-function MiniXP({ label, xp, emoji }: { label: string; xp: number; emoji: string }) {
+function MiniXP({ label, xp, Icon }: { label: string; xp: number; Icon: LucideIcon }) {
   return (
     <div className="rounded-lg bg-surface2 py-1.5">
-      <p className="text-sm">{emoji}</p>
+      <Icon size={15} strokeWidth={1.9} className="mx-auto text-brand" aria-hidden />
       <p className="text-xs font-extrabold text-ink">{xp.toLocaleString()}</p>
       <p className="text-[9px] font-semibold uppercase text-inksoft">{label} XP</p>
     </div>

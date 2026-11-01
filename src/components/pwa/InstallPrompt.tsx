@@ -89,7 +89,7 @@ export function InstallPrompt({ allowAuto }: { allowAuto: boolean }) {
   if (installed) return null;
 
   return (
-    <Modal open={open} onClose={() => dismiss(false)} title="Take PrepStride offline 📲">
+    <Modal open={open} onClose={() => dismiss(false)} title="Take PrepStride offline">
       <div className="flex flex-col items-center gap-3 text-center">
         <Pip mood="wave" size={84} />
         <p className="text-sm text-ink">
