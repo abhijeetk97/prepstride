@@ -7,6 +7,9 @@ import { RetroLogModal } from '../components/timesheet/RetroLogModal';
 import { TimerStartModal } from '../components/timer/TimerStartModal';
 import { useTimer } from '../hooks/useTimer';
 import { SUBJECT_META, type TimeLog } from '../types';
+import { CountUp } from '../components/motion/CountUp';
+import { markFresh, useFresh } from '../utils/fresh';
+import { currentMotion } from '../hooks/useMotionPreference';
 import { formatMinutes, todayISO, toISODate, weekStartISO, monthStartISO, formatDateShort, lastNDays } from '../utils/dates';
 
 type View = 'day' | 'week' | 'month';
@@ -17,18 +20,33 @@ export function TimesheetScreen({ data }: { data: AppData }) {
   const [retroOpen, setRetroOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const timer = useTimer();
+  const fresh = useFresh();
+  const [collapsing, setCollapsing] = useState<number | null>(null);
 
+  // The row collapses in place, then the delete lands. The undo toast is the safety net
+  // (5s, with a bar showing the window run out) and grows the row back.
   const deleteLog = (log: TimeLog) => {
-    if (log.id == null || !confirm('Delete this session?')) return;
+    if (log.id == null || collapsing != null) return;
+    const id = log.id;
     const snapshot = { ...log };
-    void db.timeLogs.delete(log.id).then(() => {
-      showToast({
-        message: 'Session deleted',
-        actionLabel: 'Undo',
-        duration: 5000,
-        onAction: () => void db.timeLogs.put(snapshot)
-      });
-    });
+    setCollapsing(id);
+    setTimeout(
+      () => {
+        void db.timeLogs.delete(id).then(() => {
+          setCollapsing(null);
+          showToast({
+            message: 'Session deleted',
+            actionLabel: 'Undo',
+            duration: 5000,
+            onAction: () => {
+              markFresh(snapshot.createdAt);
+              void db.timeLogs.put(snapshot);
+            }
+          });
+        });
+      },
+      currentMotion() === 'off' ? 0 : 280
+    );
   };
 
   const viewDate = useMemo(() => {
@@ -89,7 +107,7 @@ export function TimesheetScreen({ data }: { data: AppData }) {
             <p className="text-sm font-bold text-ink">
               {dayOffset === 0 ? 'Today' : dayOffset === 1 ? 'Yesterday' : formatDateShort(viewDate)}
               <span className="ml-2 font-semibold text-inksoft">
-                {formatMinutes(rangeStats.total)}
+                <CountUp key={viewDate} value={rangeStats.total} format={formatMinutes} duration={600} />
                 {dayOffset === 0 ? ` today · target ${formatMinutes(data.todayTargetMinutes)}` : ''}
               </span>
             </p>
@@ -109,7 +127,12 @@ export function TimesheetScreen({ data }: { data: AppData }) {
                   .map((l) => {
                     const meta = SUBJECT_META[l.subject];
                     return (
-                      <li key={l.id} className="flex items-center gap-3 py-2.5">
+                      <li
+                        key={l.id}
+                        className={`row-shell ${collapsing === l.id ? 'row-collapse' : fresh.has(l.createdAt) ? 'row-grow' : ''}`}
+                      >
+                        <div>
+                        <div className="flex items-center gap-3 py-2.5">
                         <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: meta.color }} />
                         <div className="min-w-0 flex-1">
                           <p className="break-words text-sm font-semibold leading-snug text-ink">{l.topic || meta.label}</p>
@@ -132,6 +155,8 @@ export function TimesheetScreen({ data }: { data: AppData }) {
                         >
                           <Trash2 size={15} />
                         </button>
+                        </div>
+                        </div>
                       </li>
                     );
                   })}

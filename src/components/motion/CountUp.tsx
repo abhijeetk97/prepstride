@@ -10,18 +10,28 @@ export function CountUp({
   value,
   format = (n) => String(n),
   duration = 900,
+  changeDuration = 600,
+  instant = false,
   className = ''
 }: {
   value: number;
   format?: (n: number) => string;
+  /** First count, from zero. */
   duration?: number;
+  /** Later changes, from the old value (a save adding minutes). */
+  changeDuration?: number;
+  /** Start on the final value (Home after a plain tab switch). */
+  instant?: boolean;
   className?: string;
 }) {
-  const [shown, setShown] = useState(() => (currentMotion() === 'off' ? value : 0));
+  const [shown, setShown] = useState(() => (instant || currentMotion() === 'off' ? value : 0));
   const from = useRef(shown);
+  const counted = useRef(false);
 
   useEffect(() => {
-    if (currentMotion() === 'off') {
+    const ms = counted.current ? changeDuration : duration;
+    counted.current = true;
+    if (currentMotion() === 'off' || from.current === value) {
       from.current = value;
       setShown(value);
       return;
@@ -30,20 +40,16 @@ export function CountUp({
     const origin = from.current;
     let raf = 0;
     const tick = (now: number) => {
-      const t = (now - start) / duration;
+      const t = (now - start) / ms;
       const next = countUpFrame(origin, value, t);
       from.current = next;
       setShown(next);
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      // An interrupted count still ends on the true value.
-      from.current = value;
-      setShown(value);
-    };
-  }, [value, duration]);
+    // An interrupted count resumes from where it got to, so it still ends on the true value.
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration, changeDuration]);
 
   return (
     <span className={className}>

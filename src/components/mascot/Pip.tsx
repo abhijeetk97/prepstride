@@ -149,11 +149,14 @@ export function Pip({
   mood = 'cheer',
   xp,
   size = 96,
+  accessoryDrop = false,
   className = ''
 }: {
   mood?: PipMood;
   xp?: number;
   size?: number;
+  /** Drop the rank accessory in from above (once, on a new rank). */
+  accessoryDrop?: boolean;
   className?: string;
 }) {
   const id = useId();
@@ -172,7 +175,7 @@ export function Pip({
       height={size}
       role="img"
       aria-label="Pip the Stride Bird"
-      className={`pip pip-${mood} shrink-0 ${className}`}
+      className={`pip pip-${mood} shrink-0 ${accessoryDrop ? 'pip-accessory-drop' : ''} ${className}`}
     >
       <g className="pip-hop">
         {/* feet stay planted while the body breathes */}

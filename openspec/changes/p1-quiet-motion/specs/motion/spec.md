@@ -23,3 +23,17 @@ The target-met celebration SHALL fire only when today's logged minutes reach the
 
 ### Requirement: Nothing SHALL animate while the app is hidden
 CSS animations SHALL pause while the document is hidden.
+
+### Requirement: Saves are visible and never wait
+A Quick log save SHALL be written before any animation, then shown: Save turns into a check, the sheet closes, and the new session grows into the open list with a short highlight.
+
+#### Scenario: Save during the sheet animation
+- **WHEN** the user taps Save while the sheet is still opening
+- **THEN** the session is stored at once and the sheet's exit does not delay the write
+
+### Requirement: Home arrival only when it means something
+The Home arrival sequence SHALL play on the first Home visit of a local day or after 30 minutes away; otherwise Home shows its finished state.
+
+#### Scenario: Tab switch inside 30 minutes
+- **WHEN** the user leaves Home and returns within 30 minutes on the same day
+- **THEN** the ring and numbers show their final values without replaying

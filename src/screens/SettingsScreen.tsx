@@ -7,6 +7,7 @@ import { Modal, SectionCard, showToast } from '../components/common';
 import { formatDateShort } from '../utils/dates';
 import { parseBackupText, summarizeBackup, type BackupPreview } from '../utils/backupParse';
 import type { MotionSetting, ThemeName } from '../types';
+import { hapticsSupported } from '../utils/haptics';
 
 // Swatches mirror the palettes in index.css: paper, brand, accent.
 const THEMES: { id: ThemeName; label: string; swatch: [string, string, string]; note: string }[] = [
@@ -200,6 +201,21 @@ export function SettingsScreen({ data, onRunSetup }: { data: AppData; onRunSetup
           })}
         </div>
         <p className="mt-2 text-[11px] text-inksoft">{MOTION_OPTIONS.find((m) => m.id === (s.motion ?? 'system'))?.note}</p>
+        {hapticsSupported() && (
+          <label className="mt-3 flex min-h-11 items-center justify-between gap-3 border-t border-line pt-3">
+            <span>
+              <span className="block text-sm font-semibold text-ink">Vibration</span>
+              <span className="block text-[11px] text-inksoft">A short pulse when you save a session or meet the day's target</span>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="h-5 w-5 shrink-0 accent-[rgb(var(--c-brand))]"
+              checked={s.haptics !== false}
+              onChange={(e) => void patch({ haptics: e.target.checked })}
+            />
+          </label>
+        )}
       </SectionCard>
 
       {/* Data sovereignty */}

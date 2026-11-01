@@ -10,6 +10,8 @@ import { formatDateWithYear, formatMinutes, todayISO, addDays, formatDateShort }
 import { heatmapWindow, studyDayAverage, windowAverages } from '../utils/analytics';
 import { csatQualified, formatPercent, formatPrelimsScore } from '../utils/scores';
 
+let heatmapPlayed = false;
+
 export function AnalyticsScreen({ data }: { data: AppData }) {
   const minsByDate = useMemo(() => minutesByDate(data.timeLogs), [data.timeLogs]);
   const sessionsByDate = useMemo(() => {
@@ -20,6 +22,12 @@ export function AnalyticsScreen({ data }: { data: AppData }) {
   const today = todayISO();
   const range = heatmapWindow(today);
   const [picked, setPicked] = useState<string | null>(null);
+  // The wave plays the first time the heatmap shows in a session, not on every visit.
+  const [wave] = useState(() => {
+    const play = !heatmapPlayed;
+    heatmapPlayed = true;
+    return play;
+  });
 
   const weeks = useMemo(() => {
     const cols: { date: string; minutes: number }[][] = [];
@@ -68,8 +76,29 @@ export function AnalyticsScreen({ data }: { data: AppData }) {
       </header>
 
       <SectionCard title="365-day study heatmap" icon={<CalendarDays size={14} />} className="mb-3">
-        <div className="no-scrollbar overflow-x-auto pb-2">
-          <div className="flex gap-[3px]">
+        {/* Fixed slot above the grid, so picking a day never shifts the layout. */}
+        <p className="mb-2 min-h-[1rem] text-xs font-semibold text-ink" aria-live="polite">
+          {picked ? (
+            <>
+              {formatDateWithYear(picked)} · {pickedMinutes > 0 ? formatMinutes(pickedMinutes) : 'no study'} · {pickedSessions} session
+              {pickedSessions === 1 ? '' : 's'}
+            </>
+          ) : (
+            <span className="font-medium text-inksoft">Tap a day for its hours</span>
+          )}
+        </p>
+        <div
+          className="no-scrollbar overflow-x-auto pb-2"
+          ref={(el) => {
+            // Open on the latest weeks, so today (and its pulse) is in view.
+            if (el && !el.dataset.scrolled) {
+              el.dataset.scrolled = '1';
+              el.scrollLeft = el.scrollWidth;
+            }
+          }}
+        >
+          {/* Diagonal wave from the oldest week to today, capped at 900ms. */}
+          <div className="flex gap-[3px]" style={{ ['--step' as string]: `${Math.min(18, 900 / (weeks.length + 6))}ms` }}>
             {weeks.map((weekCol, wi) => (
               <div key={wi} className="flex flex-col gap-[3px]">
                 {weekCol.map((day, di) => (
@@ -79,8 +108,8 @@ export function AnalyticsScreen({ data }: { data: AppData }) {
                     disabled={day.minutes < 0}
                     aria-label={`${formatDateWithYear(day.date)}, ${day.minutes > 0 ? formatMinutes(day.minutes) : 'no study'}`}
                     aria-pressed={picked === day.date}
-                    className={`hm-cell h-4 w-4 rounded-[3px] ${picked === day.date ? 'ring-2 ring-ink' : ''}`}
-                    style={{ background: heatColor(day.minutes), ['--d' as string]: wi + di }}
+                    className={`h-4 w-4 rounded-[3px] ${wave || day.date === today ? 'hm-cell' : ''} ${day.date === today ? 'hm-today' : ''} ${picked === day.date ? 'ring-2 ring-ink' : ''}`}
+                    style={{ background: heatColor(day.minutes), ['--d' as string]: wave ? wi + di : 0 }}
                     onClick={() => day.minutes >= 0 && setPicked(picked === day.date ? null : day.date)}
                   />
                 ))}
@@ -88,12 +117,6 @@ export function AnalyticsScreen({ data }: { data: AppData }) {
             ))}
           </div>
         </div>
-        {picked && (
-          <p className="mt-2 text-xs font-semibold text-ink">
-            {formatDateWithYear(picked)} · {pickedMinutes > 0 ? formatMinutes(pickedMinutes) : 'no study'} · {pickedSessions} session
-            {pickedSessions === 1 ? '' : 's'}
-          </p>
-        )}
         <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-inksoft">
           <span>
             Last 365 days · {formatDateWithYear(range.start)} → today

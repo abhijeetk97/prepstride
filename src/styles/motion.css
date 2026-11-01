@@ -148,6 +148,53 @@
   30% { opacity: 1; }
   100% { opacity: 0; transform: translate(8px, -14px); }
 }
+@keyframes row-grow {
+  from { grid-template-rows: 0fr; opacity: 0; }
+  to { grid-template-rows: 1fr; opacity: 1; }
+}
+@keyframes row-collapse {
+  from { grid-template-rows: 1fr; opacity: 1; }
+  to { grid-template-rows: 0fr; opacity: 0; }
+}
+@keyframes row-flash {
+  0%, 30% { background-color: rgb(var(--c-brand-soft)); }
+  100% { background-color: transparent; }
+}
+@keyframes xp-float {
+  0% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  20% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-22px); }
+}
+@keyframes save-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes icon-dip {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(3px) scale(0.92); }
+}
+@keyframes slide-from-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-from-left {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(var(--c-brand) / 0.55); }
+  70%, 100% { box-shadow: 0 0 0 5px rgb(var(--c-brand) / 0); }
+}
+@keyframes shield-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+@keyframes spark {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-16px) scale(0.4); }
+}
 @keyframes accessory-drop {
   from { opacity: 0; transform: translateY(-24px); }
   to { opacity: 1; transform: none; }
@@ -193,7 +240,8 @@
 .pip .pip-z {
   animation: pip-z 3s ease-in-out infinite;
 }
-.pip .pip-accessory {
+/* Accessories drop in once, when a new rank is reached (claimRankUp). */
+.pip-accessory-drop .pip-accessory {
   animation: accessory-drop 420ms var(--ease-spring) both;
 }
 
@@ -249,12 +297,88 @@
 
 .hm-cell {
   animation: cell-in 320ms var(--ease-emph) both;
-  animation-delay: calc(var(--d, 0) * 14ms);
 }
 
 .flame-sway {
   transform-origin: 50% 90%;
   animation: flame-sway 2.4s ease-in-out infinite;
+}
+.flame-glow {
+  filter: drop-shadow(0 0 4px rgb(232 119 46 / 0.6));
+}
+
+/* Next shield: pops with sparks the moment a seventh target-met day earns it. */
+.shield-pop {
+  animation: shield-pop 520ms var(--ease-spring);
+}
+.spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 6px;
+  margin: -3px 0 0 -1.5px;
+  border-radius: 2px;
+  background: rgb(var(--c-accent));
+  transform-origin: 50% 100%;
+  animation: spark 600ms var(--ease-standard) both;
+  pointer-events: none;
+}
+
+/* Rows that arrive (Quick log save, undo) grow into place with a short highlight; deleted
+   rows collapse. The <li> is a one-row grid; its child must have min-height: 0. */
+.row-shell {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+.row-shell > * {
+  min-height: 0;
+  overflow: hidden;
+}
+.row-grow {
+  animation: row-grow 420ms var(--ease-emph) both;
+}
+.row-grow > * > * {
+  border-radius: 0.6rem;
+  animation: row-flash 1.8s var(--ease-standard) both;
+}
+.row-collapse {
+  animation: row-collapse 280ms var(--ease-exit) both;
+  pointer-events: none;
+}
+
+/* Ritual tick: the real XP floats up and fades. */
+.xp-chip {
+  animation: xp-float 1s var(--ease-standard) both;
+  pointer-events: none;
+}
+
+/* Quick log: the selected subject chip pops; Save turns into a check. */
+.chip-pop {
+  animation: pop-in 320ms var(--ease-spring);
+}
+.save-check {
+  animation: save-pop 380ms var(--ease-spring) both;
+}
+
+/* Duration options: one highlight slides between them. */
+.seg-pill {
+  transition: transform 380ms var(--ease-spring), opacity var(--dur-quick) var(--ease-standard);
+}
+
+/* Heatmap: today carries a soft pulse ring. */
+.hm-cell.hm-today {
+  animation: cell-in 320ms var(--ease-emph) both, pulse-ring 2.4s ease-out 1s infinite;
+  animation-delay: calc(var(--d, 0) * var(--step, 14ms)), calc(var(--d, 0) * var(--step, 14ms) + 400ms);
+}
+.hm-cell {
+  animation-delay: calc(var(--d, 0) * var(--step, 14ms));
+}
+
+/* Syllabus: seven-step revision track fills left to right with a 30ms ripple. */
+.step-tick {
+  transition: background-color var(--dur-base) var(--ease-standard);
+  transition-delay: calc(var(--s, 0) * 30ms);
 }
 
 /* Syllabus status chip: the new label rises in when the status changes. Plays per change, not per render. */
@@ -330,10 +454,10 @@
   animation: fade-out var(--dur-quick) var(--ease-exit) both;
 }
 .sheet-panel {
-  animation: sheet-in var(--dur-slow) var(--ease-sheet) both;
+  animation: sheet-in 480ms var(--ease-sheet) both;
 }
 .sheet-panel.closing {
-  animation: sheet-out 200ms var(--ease-exit) both;
+  animation: sheet-out 260ms var(--ease-exit) both;
 }
 @media (min-width: 640px) {
   .sheet-panel {
@@ -345,12 +469,18 @@
 }
 
 .toast-panel {
-  animation: toast-in var(--dur-base) var(--ease-sheet) both;
+  animation: toast-in 420ms var(--ease-sheet) both;
+}
+.toast-panel.held .toast-countdown {
+  animation-play-state: paused;
 }
 
 /* Bottom nav: one pill slides between tabs. */
 .nav-pill {
-  transition: transform var(--dur-slow) var(--ease-spring);
+  transition: transform 450ms var(--ease-spring);
+}
+.nav-dip {
+  animation: icon-dip 450ms var(--ease-spring);
 }
 
 /* ─── Screen transitions (View Transitions API) ────────────────────────────── */
@@ -366,8 +496,21 @@
 ::view-transition-new(root) {
   animation: 340ms var(--ease-emph) both rise-in;
 }
+/* Tabs slide in 28px from the direction of travel (App.navigate sets data-nav-dir). */
+html[data-nav-dir='fwd']::view-transition-new(root) {
+  animation-name: slide-from-right;
+}
+html[data-nav-dir='back']::view-transition-new(root) {
+  animation-name: slide-from-left;
+}
 html[data-motion='calm']::view-transition-new(root) {
   animation-name: fade-in;
+}
+
+/* Home after a plain tab switch: the finished state, no arrival sequence. */
+.no-arrival .rise,
+.no-arrival .ring-seg {
+  animation: none;
 }
 
 /* ─── Tiers ────────────────────────────────────────────────────────────────── */
@@ -380,11 +523,28 @@ html[data-motion='calm'] .zen-halo,
 html[data-motion='calm'] .zen-drift-a,
 html[data-motion='calm'] .zen-drift-b,
 html[data-motion='calm'] .check-box-on,
+html[data-motion='calm'] .chip-pop,
+html[data-motion='calm'] .save-check,
+html[data-motion='calm'] .xp-chip,
+html[data-motion='calm'] .nav-dip,
+html[data-motion='calm'] .shield-pop,
+html[data-motion='calm'] .spark,
 html[data-motion='calm'] .skeleton {
   animation: none !important;
 }
-html[data-motion='calm'] .feather {
+html[data-motion='calm'] .feather,
+html[data-motion='calm'] .spark,
+html[data-motion='calm'] .xp-chip {
   display: none;
+}
+html[data-motion='calm'] .hm-today {
+  animation: fade-in var(--dur-base) both !important;
+}
+html[data-motion='calm'] .row-grow {
+  animation-name: fade-in !important;
+}
+html[data-motion='calm'] .row-collapse {
+  animation-name: fade-out !important;
 }
 html[data-motion='calm'] .rise,
 html[data-motion='calm'] .sheet-panel,
@@ -397,6 +557,7 @@ html[data-motion='calm'] .sheet-panel.closing {
   animation-name: fade-out !important;
 }
 html[data-motion='calm'] .nav-pill,
+html[data-motion='calm'] .seg-pill,
 html[data-motion='calm'] .roll-strip {
   transition-property: opacity;
 }

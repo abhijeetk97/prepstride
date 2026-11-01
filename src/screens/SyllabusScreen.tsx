@@ -304,6 +304,19 @@ function CategoryBlock({
                 <p className="text-[13px] leading-snug text-ink">{i.microTopic}</p>
                 {i.priority === 'high' && <span className="text-[10px] font-bold text-[#C0503C]">● high yield</span>}
                 {isTopicStale(i, todayISO()) && <span className="ml-1 text-[10px] font-bold text-[#D4A94E]">Stale</span>}
+                {/* Seven steps of the revision cycle, filling left to right with a short ripple. */}
+                <div className="mt-1.5 flex gap-[3px]" aria-hidden>
+                  {Array.from({ length: STATUS_META.mastered.step }, (_, s) => (
+                    <span
+                      key={s}
+                      className="step-tick h-1 w-3 rounded-full"
+                      style={{
+                        ['--s' as string]: s,
+                        backgroundColor: s < STATUS_META[i.status].step ? STATUS_META[i.status].color : 'rgb(var(--c-line))'
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
               <div className="flex shrink-0 flex-col items-stretch gap-1">
                 <button

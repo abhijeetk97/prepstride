@@ -4,6 +4,9 @@ import { Modal } from '../common';
 import { db } from '../../db';
 import { SUBJECT_META, type SubjectCategory, type TimeLog } from '../../types';
 import { fromISODate, todayISO } from '../../utils/dates';
+import { markFresh } from '../../utils/fresh';
+import { haptic } from '../../utils/haptics';
+import { currentMotion } from '../../hooks/useMotionPreference';
 
 const QUICK_MINUTES = [30, 45, 60, 90, 120, 180];
 const SUBJECTS = Object.keys(SUBJECT_META) as SubjectCategory[];
@@ -43,12 +46,12 @@ export function RetroLogModal({ open, onClose, defaultDate }: { open: boolean; o
       log.startTime = start.toISOString();
       log.endTime = new Date(start.getTime() + minutes * 60_000).toISOString();
     }
+    // Saved before anything animates; the check and the sheet's exit never hold up the write.
     await db.timeLogs.add(log);
+    markFresh(log.createdAt);
+    haptic(12);
     setSaved(true);
-    setTimeout(() => {
-      onClose();
-      setSaved(false);
-    }, 650);
+    setTimeout(onClose, currentMotion() === 'off' ? 0 : 420);
   };
 
   return (
@@ -61,7 +64,8 @@ export function RetroLogModal({ open, onClose, defaultDate }: { open: boolean; o
               <button
                 key={s}
                 onClick={() => setSubject(s)}
-                className={`chip ${subject === s ? 'chip-active' : ''}`}
+                aria-pressed={subject === s}
+                className={`chip ${subject === s ? 'chip-active chip-pop' : ''}`}
                 style={subject === s ? { backgroundColor: SUBJECT_META[s].color } : { borderColor: SUBJECT_META[s].color + '55' }}
               >
                 {SUBJECT_META[s].short}
@@ -72,9 +76,25 @@ export function RetroLogModal({ open, onClose, defaultDate }: { open: boolean; o
 
         <div>
           <p className="label">Duration</p>
-          <div className="flex flex-wrap gap-2">
+          {/* One highlight slides between the options; it hides when the slider picks another value. */}
+          <div className="relative grid grid-cols-6 gap-0 rounded-full bg-surface2 p-1" role="radiogroup" aria-label="Duration">
+            <span
+              aria-hidden
+              className="seg-pill pointer-events-none absolute bottom-1 left-1 top-1 rounded-full bg-brand shadow"
+              style={{
+                width: `calc((100% - 0.5rem) / ${QUICK_MINUTES.length})`,
+                transform: `translateX(${Math.max(0, QUICK_MINUTES.indexOf(minutes)) * 100}%)`,
+                opacity: QUICK_MINUTES.includes(minutes) ? 1 : 0
+              }}
+            />
             {QUICK_MINUTES.map((m) => (
-              <button key={m} onClick={() => setMinutes(m)} className={`chip ${minutes === m ? 'chip-active' : ''}`}>
+              <button
+                key={m}
+                role="radio"
+                aria-checked={minutes === m}
+                onClick={() => setMinutes(m)}
+                className={`relative min-h-11 rounded-full text-sm font-semibold transition-colors duration-200 ${minutes === m ? 'text-white' : 'text-ink'}`}
+              >
                 {m >= 60 ? `${m / 60}h` : `${m}m`}
               </button>
             ))}
@@ -110,9 +130,9 @@ export function RetroLogModal({ open, onClose, defaultDate }: { open: boolean; o
 
         <button className="btn-primary w-full py-3" onClick={() => void save()} disabled={saved}>
           {saved ? (
-            <>
-              <Check size={18} /> Logged! +{Math.floor(minutes / 30) * 10} XP
-            </>
+            <span className="save-check inline-flex items-center gap-2">
+              <Check size={18} strokeWidth={3} /> Logged · +{Math.floor(minutes / 30) * 10} XP
+            </span>
           ) : (
             'Save session'
           )}

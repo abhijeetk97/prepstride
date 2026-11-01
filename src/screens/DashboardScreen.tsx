@@ -1,5 +1,5 @@
 import { WeeklyPlannerCard } from './PlannerScreen';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Play, Plus, Share2, Flame, Trophy, Target, ChevronRight, Moon, Sparkles } from 'lucide-react';
 import { toBlob } from 'html-to-image';
 import type { AppData } from '../hooks/useAppData';
@@ -8,7 +8,10 @@ import { DAILY_TARGET_CHIPS, db, setDailyTarget } from '../db';
 import { SectionCard, StarRating, StatPill, FeatherBurst, Modal, RankIcon, StreakFlame, ShieldFill } from '../components/common';
 import { SegmentedRing } from '../components/motion/SegmentedRing';
 import { CountUp } from '../components/motion/CountUp';
-import { claimDailyCelebration, ringSegments } from '../utils/motion';
+import { RollingDigits } from '../components/motion/RollingDigits';
+import { claimDailyCelebration, claimRankUp, ringSegments, shouldPlayArrival } from '../utils/motion';
+import { haptic } from '../utils/haptics';
+import { useFresh } from '../utils/fresh';
 import { Pip } from '../components/mascot/Pip';
 import { ShareCard } from '../components/partner/ShareCard';
 import { RetroLogModal } from '../components/timesheet/RetroLogModal';
@@ -17,7 +20,7 @@ import { useTimer } from '../hooks/useTimer';
 import { formatDateLong, formatMinutes, todayISO, daysUntil, fromISODate } from '../utils/dates';
 import { quoteOfTheDay } from '../data/seedData';
 import { buildDigestText, shareDailyDigest } from '../utils/share';
-import { STUDY_DAY_MINUTES, levelForXP, nextLevelProgress } from '../utils/gamification';
+import { RITUAL_XP, STUDY_DAY_MINUTES, levelForXP, nextLevelProgress } from '../utils/gamification';
 import { SUBJECT_META, type DailyRituals } from '../types';
 import { buildAnswerPractice } from '../utils/scores';
 import { requestCsatLog } from '../utils/csatLog';
@@ -30,6 +33,18 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
   const [shareOpen, setShareOpen] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [answerOpen, setAnswerOpen] = useState(false);
+  const [rankUp, setRankUp] = useState(false);
+  const [mcqEarned, setMcqEarned] = useState(0);
+  const fresh = useFresh();
+
+  // The arrival sequence plays on the first Home visit of the day, or after 30 minutes away.
+  // A plain tab switch shows the finished state.
+  const [arrival] = useState(() => shouldPlayArrival(new Date(), Number(localStorage.getItem('home_seen')) || null));
+  useEffect(() => {
+    const mark = () => localStorage.setItem('home_seen', String(Date.now()));
+    mark();
+    return mark;
+  }, []);
 
   const todayMinutes = useMemo(
     () => data.timeLogs.filter((l) => l.date === today).reduce((s, l) => s + l.durationMinutes, 0),
@@ -76,10 +91,16 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
   useEffect(() => {
     if (claimDailyCelebration(today, todayMinutes, targetMinutes, localStorage)) {
       setCelebrating(true);
+      haptic(12);
       const t = setTimeout(() => setCelebrating(false), 4000);
       return () => clearTimeout(t);
     }
   }, [todayMinutes, targetMinutes, today]);
+
+  // A new rank drops Pip's accessory in once.
+  useEffect(() => {
+    if (claimRankUp(tier.level, localStorage)) setRankUp(true);
+  }, [tier.level]);
 
   const setTarget = (mins: number) => setDailyTarget(mins);
 
@@ -127,7 +148,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
   };
 
   return (
-    <div className="relative px-4 pt-safe">
+    <div className={`relative px-4 pt-safe ${arrival ? '' : 'no-arrival'}`}>
       <FeatherBurst show={celebrating} />
       <div className={`tod-wash ${tod}`} aria-hidden />
 
@@ -155,6 +176,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
             mood={celebrating ? 'celebrate' : data.streak.shieldUsedForYesterday ? 'sleep' : 'cheer'}
             xp={data.xp.total}
             size={76}
+            accessoryDrop={rankUp}
           />
         )}
       </header>
@@ -190,7 +212,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
       {/* ─── Progress ring ─── */}
       <section className="card elev-2 rise relative flex flex-col items-center gap-3 p-5" style={{ ['--i' as string]: 2 }}>
         <SegmentedRing segments={segments} size={196} stroke={14} glow={celebrating}>
-          <CountUp value={todayMinutes} format={formatMinutes} className="font-display text-[2.1rem] leading-none text-ink" />
+          <CountUp value={todayMinutes} format={formatMinutes} instant={!arrival} className="font-display text-[2.1rem] leading-none text-ink" />
           <p className="mt-1.5 text-[11px] font-semibold text-inksoft">today · target {formatMinutes(targetMinutes)}</p>
           {!goalMet && todayMinutes > 0 && (
             <p className="mt-0.5 text-[11px] font-bold text-brand">{formatMinutes(targetMinutes - todayMinutes)} to go</p>
@@ -242,7 +264,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
                 : 'days strong'
               : todayMinutes > 0
                 ? '30 min makes a day'
-                : 'log a session'
+                : 'Start today'
           }
         />
         <StatPill
@@ -256,11 +278,7 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
         />
         <StatPill
           label="Shields"
-          value={
-            <>
-              {data.streak.shields} <ShieldFill progress={data.streak.daysTowardShield / 7} />
-            </>
-          }
+          value={<ShieldCount shields={data.streak.shields} progress={data.streak.daysTowardShield / 7} />}
           sub={`${7 - data.streak.daysTowardShield} target-day${7 - data.streak.daysTowardShield === 1 ? '' : 's'}`}
         />
       </section>
@@ -304,13 +322,17 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
             />
           )}
           <RitualRow label="Editorial summary notes" checked={rituals?.editorialNotes} onToggle={(v) => void toggleRitual({ editorialNotes: v })} />
-          <div className="flex items-center justify-between rounded-lg px-1 py-1.5">
+          <div className="relative flex items-center justify-between rounded-lg px-1 py-1.5">
             <span className="text-sm text-ink">Daily MCQs practice</span>
+            {(rituals?.mcqsCompleted ?? 0) > 0 && mcqEarned > 0 && <XPChip key={mcqEarned} className="right-28" />}
             <div className="flex items-center gap-1.5">
               {[10, 20, 30].map((n) => (
                 <button
                   key={n}
-                  onClick={() => void toggleRitual({ mcqsCompleted: rituals?.mcqsCompleted === n ? 0 : n })}
+                  onClick={() => {
+                    if (!rituals?.mcqsCompleted) setMcqEarned((c) => c + 1);
+                    void toggleRitual({ mcqsCompleted: rituals?.mcqsCompleted === n ? 0 : n });
+                  }}
                   className={`chip px-2.5 py-1 text-xs ${(rituals?.mcqsCompleted ?? 0) >= n ? 'chip-active' : ''}`}
                 >
                   {n}
@@ -343,7 +365,10 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
           </div>
           <RitualRow label="Monthly CA magazine" checked={rituals?.currentAffairsMag} onToggle={(v) => void toggleRitual({ currentAffairsMag: v })} />
         </div>
-        <p className="mt-2 text-right text-[11px] font-semibold text-inksoft">{ritualDone(rituals)}/6 rituals today</p>
+        <p className="mt-2 flex items-center justify-end text-[11px] font-semibold text-inksoft">
+          <RollingDigits text={String(ritualDone(rituals))} />
+          /6 rituals today
+        </p>
       </SectionCard>
 
       {/* ─── Today's timesheet ─── */}
@@ -360,17 +385,21 @@ export function DashboardScreen({ data, navigate }: { data: AppData; navigate: (
         {todayLogs.length === 0 ? (
           <p className="py-3 text-center text-xs text-inksoft">No sessions logged yet — start the timer or quick-log an offline session.</p>
         ) : (
-          <ul className="space-y-2.5">
+          <ul className="space-y-2">
             {todayLogs.map((l) => {
               const meta = SUBJECT_META[l.subject];
               return (
-                <li key={l.id} className="flex items-start gap-2.5">
-                  <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: meta.color }} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-ink">{meta.label}</p>
-                    {l.topic && <p className="line-clamp-2 break-words text-xs leading-snug text-inksoft">{l.topic}</p>}
+                <li key={l.id} className={`row-shell ${fresh.has(l.createdAt) ? 'row-grow' : ''}`}>
+                  <div>
+                    <div className="flex items-start gap-2.5 py-0.5">
+                      <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: meta.color }} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-ink">{meta.label}</p>
+                        {l.topic && <p className="line-clamp-2 break-words text-xs leading-snug text-inksoft">{l.topic}</p>}
+                      </div>
+                      <span className="text-sm font-bold tabular-nums text-ink">{formatMinutes(l.durationMinutes)}</span>
+                    </div>
                   </div>
-                  <span className="text-sm font-bold tabular-nums text-ink">{formatMinutes(l.durationMinutes)}</span>
                 </li>
               );
             })}
@@ -527,8 +556,16 @@ function AnswerPracticeModal({ open, onClose, onSaved }: { open: boolean; onClos
 }
 
 function RitualRow({ label, checked, onToggle }: { label: string; checked?: boolean; onToggle: (v: boolean) => void }) {
+  // The chip shows only after a tap that ticks the ritual, never on first render or untick.
+  const [earned, setEarned] = useState(0);
   return (
-    <button onClick={() => onToggle(!checked)} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left active:bg-surface2">
+    <button
+      onClick={() => {
+        if (!checked) setEarned((n) => n + 1);
+        onToggle(!checked);
+      }}
+      className="relative flex min-h-11 w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left active:bg-surface2"
+    >
       <span
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors duration-150 ${
           checked ? 'check-box-on border-brand bg-brand text-white' : 'border-line bg-surface'
@@ -541,6 +578,45 @@ function RitualRow({ label, checked, onToggle }: { label: string; checked?: bool
         )}
       </span>
       <span className={`text-sm transition-colors duration-200 ${checked ? 'text-inksoft line-through' : 'text-ink'}`}>{label}</span>
+      {checked && earned > 0 && <XPChip key={earned} className="right-1" />}
     </button>
+  );
+}
+
+/** The real XP a ritual earns (gamification.ts), floating up once. */
+function XPChip({ className = '' }: { className?: string }) {
+  const [done, setDone] = useState(false);
+  if (done) return null;
+  return (
+    <span
+      aria-hidden
+      onAnimationEnd={() => setDone(true)}
+      className={`xp-chip absolute top-1/2 -mt-3 rounded-full bg-brandsoft px-2 py-0.5 text-[11px] font-extrabold text-brand ${className}`}
+    >
+      +{RITUAL_XP} XP
+    </span>
+  );
+}
+
+/** Shield count with the next shield filling; pops with sparks when a new one is earned. */
+function ShieldCount({ shields, progress }: { shields: number; progress: number }) {
+  const prev = useRef(shields);
+  const [pop, setPop] = useState(0);
+  useEffect(() => {
+    if (shields > prev.current) {
+      setPop((n) => n + 1);
+      haptic(12);
+    }
+    prev.current = shields;
+  }, [shields]);
+  return (
+    <>
+      {shields}
+      <span key={pop} className={`relative inline-flex ${pop ? 'shield-pop' : ''}`}>
+        <ShieldFill progress={progress} />
+        {pop > 0 &&
+          [0, 60, 120, 180, 240, 300].map((a) => <span key={a} className="spark" style={{ ['--a' as string]: `${a}deg` }} aria-hidden />)}
+      </span>
+    </>
   );
 }

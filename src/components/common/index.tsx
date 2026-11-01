@@ -70,7 +70,7 @@ export function Modal({
       setDrag(0);
       return;
     }
-    const t = setTimeout(() => setRendered(false), currentMotion() === 'off' ? 0 : 200);
+    const t = setTimeout(() => setRendered(false), currentMotion() === 'off' ? 0 : 260);
     return () => clearTimeout(t);
   }, [open]);
 
@@ -90,7 +90,8 @@ export function Modal({
     dragging.current = false;
     const dy = Math.max(0, e.clientY - dragStart.current.y);
     const velocity = dy / Math.max(1, performance.now() - dragStart.current.t);
-    if (dy > 110 || velocity > 0.6) onClose();
+    const height = dialogRef.current?.offsetHeight ?? 400;
+    if (dy > height * 0.3 || velocity > 0.5) onClose();
     else setDrag(0);
   };
   useEffect(() => { if (open) dialogRef.current?.focus(); }, [open, title]);
@@ -126,7 +127,7 @@ export function Modal({
   const closing = !open;
   return (
     <div
-      className={`sheet-backdrop fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center ${closing ? 'closing pointer-events-none' : ''}`}
+      className={`sheet-backdrop fixed inset-0 z-50 flex items-end justify-center bg-black/45 backdrop-blur-[3px] sm:items-center ${closing ? 'closing pointer-events-none' : ''}`}
       onClick={onClose}
     >
       <div

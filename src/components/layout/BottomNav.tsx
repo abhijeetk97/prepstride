@@ -9,14 +9,19 @@ const TABS: { route: Route; label: string; Icon: typeof Home }[] = [
   { route: 'more', label: 'More', Icon: LayoutGrid }
 ];
 
-function tabFor(route: Route): Route {
+export function tabFor(route: Route): Route {
   if (route === 'planner') return 'home';
   if (route === 'analytics' || route === 'rewards' || route === 'settings') return 'more';
   return route;
 }
 
+/** Position of a route's tab, left to right; screens slide in from the direction of travel. */
+export function tabIndex(route: Route): number {
+  return TABS.findIndex((t) => t.route === tabFor(route));
+}
+
 export function BottomNav({ route, navigate }: { route: Route; navigate: (r: Route) => void }) {
-  const activeIndex = TABS.findIndex((t) => t.route === tabFor(route));
+  const activeIndex = tabIndex(route);
   return (
     <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur pb-safe">
       <div className="relative mx-auto flex max-w-lg items-stretch justify-around px-2 pt-1.5">
@@ -40,7 +45,8 @@ export function BottomNav({ route, navigate }: { route: Route; navigate: (r: Rou
               aria-label={label}
               aria-current={active ? 'page' : undefined}
             >
-              <Icon size={21} strokeWidth={active ? 2.4 : 1.9} className={active ? 'text-brand' : ''} />
+              {/* Keyed by the active tab so the icon dips once each time it becomes active. */}
+              <Icon key={active ? `on-${activeIndex}` : 'off'} size={21} strokeWidth={active ? 2.4 : 1.9} className={active ? 'nav-dip text-brand' : ''} />
               {label}
             </button>
           );

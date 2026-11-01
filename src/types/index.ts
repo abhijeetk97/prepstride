@@ -246,6 +246,8 @@ export interface AppSettings {
   theme: ThemeName;
   /** Animation tier. Absent (older backups) means 'system'. */
   motion?: MotionSetting;
+  /** Short vibration pulses on Android (default on). iOS has no vibrate API. */
+  haptics?: boolean;
   /** Set when the first-run wizard is finished or skipped. Absent → show the wizard. */
   onboardedAt?: string;
 }

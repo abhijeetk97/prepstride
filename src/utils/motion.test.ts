@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { claimDailyCelebration, countUpFrame, ringSegments } from './motion';
+import { ARRIVAL_GAP_MS, claimDailyCelebration, claimRankUp, countUpFrame, ringSegments, shouldPlayArrival } from './motion';
 
 function memoryStore() {
   const map = new Map<string, string>();
@@ -74,5 +74,33 @@ describe('ringSegments', () => {
 
   it('is empty with nothing logged', () => {
     expect(ringSegments([], 240)).toEqual([]);
+  });
+});
+
+describe('shouldPlayArrival', () => {
+  const noon = new Date(2026, 10, 1, 12, 0, 0);
+  it('plays on the first visit and on a new local day', () => {
+    expect(shouldPlayArrival(noon, null)).toBe(true);
+    expect(shouldPlayArrival(noon, new Date(2026, 9, 31, 23, 50).getTime())).toBe(true);
+  });
+  it('skips tab switches inside 30 minutes, plays after', () => {
+    expect(shouldPlayArrival(noon, noon.getTime() - 5 * 60_000)).toBe(false);
+    expect(shouldPlayArrival(noon, noon.getTime() - ARRIVAL_GAP_MS)).toBe(true);
+  });
+});
+
+describe('claimRankUp', () => {
+  it('records the first level silently, then fires once per new level', () => {
+    const store = memoryStore();
+    expect(claimRankUp(2, store)).toBe(false);
+    expect(claimRankUp(2, store)).toBe(false);
+    expect(claimRankUp(3, store)).toBe(true);
+    expect(claimRankUp(3, store)).toBe(false);
+  });
+  it('re-baselines without a drop when the level goes down', () => {
+    const store = memoryStore();
+    claimRankUp(5, store);
+    expect(claimRankUp(2, store)).toBe(false);
+    expect(claimRankUp(3, store)).toBe(true);
   });
 });

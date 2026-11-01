@@ -56,3 +56,30 @@ export function ringSegments(parts: { key: string; color: string; minutes: numbe
       return seg;
     });
 }
+
+/** Minutes away from Home before its arrival sequence plays again. */
+export const ARRIVAL_GAP_MS = 30 * 60_000;
+
+/**
+ * Whether Home plays its arrival sequence: the first visit of a local day, or a return after
+ * 30 minutes away. Plain tab switches inside that window get the finished state at once.
+ */
+export function shouldPlayArrival(now: Date, lastSeenMs: number | null): boolean {
+  if (lastSeenMs == null || !Number.isFinite(lastSeenMs)) return true;
+  const last = new Date(lastSeenMs);
+  if (last.toDateString() !== now.toDateString()) return true;
+  return now.getTime() - lastSeenMs >= ARRIVAL_GAP_MS;
+}
+
+/**
+ * Claims the accessory drop for a newly reached rank. True once per new level; the first
+ * reading only records the level, and a lower level (a restore) re-baselines silently.
+ */
+export function claimRankUp(level: number, store: CelebrationStore): boolean {
+  const key = 'pip_rank_seen';
+  const raw = store.getItem(key);
+  const seen = raw === null ? NaN : Number(raw);
+  if (level === seen) return false;
+  store.setItem(key, String(level));
+  return Number.isFinite(seen) && level > seen;
+}

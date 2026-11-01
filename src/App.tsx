@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useAppData } from './hooks/useAppData';
 import { db } from './db';
@@ -8,7 +8,7 @@ import { emptyRituals } from './types';
 import { evaluateBadges } from './utils/gamification';
 import { todayISO } from './utils/dates';
 import { backfillSyllabusSchedule, ensureSyllabusOrder, splitCombinedBooks } from './db/backfill';
-import { BottomNav } from './components/layout/BottomNav';
+import { BottomNav, tabIndex } from './components/layout/BottomNav';
 import { TimerBar } from './components/timer/TimerBar';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
@@ -16,6 +16,7 @@ import { Modal, ToastHost } from './components/common';
 import { Pip } from './components/mascot/Pip';
 import { useTimerLive } from './hooks/useTimer';
 import { currentMotion, useMotionPreference } from './hooks/useMotionPreference';
+import { setHapticsEnabled } from './utils/haptics';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { TimesheetScreen } from './screens/TimesheetScreen';
 import { SyllabusScreen } from './screens/SyllabusScreen';
@@ -53,21 +54,37 @@ export default function App() {
   const timerLive = useTimerLive();
 
   useMotionPreference(data.settings.motion);
+  setHapticsEnabled(data.settings.haptics !== false);
 
-  // Screen changes cross-fade through the View Transitions API where it exists; instant otherwise.
+  const routeRef = useRef(route);
+  routeRef.current = route;
+
+  // Screen changes go through the View Transitions API where it exists; instant otherwise.
+  // Between tabs the new screen slides in from the direction of travel.
   const navigate = useCallback((r: Route) => {
+    const from = tabIndex(routeRef.current);
+    const to = tabIndex(r);
+    document.documentElement.dataset.navDir = to > from ? 'fwd' : to < from ? 'back' : '';
     const go = () => {
       window.location.hash = `/${r}`;
       setRoute(r);
       window.scrollTo({ top: 0 });
     };
-    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    type Transition = { ready: Promise<void>; finished: Promise<void> };
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => Transition };
     if (!doc.startViewTransition || currentMotion() === 'off') return go();
-    doc.startViewTransition(() => flushSync(go));
+    const t = doc.startViewTransition(() => flushSync(go));
+    // A skipped transition (hidden tab, a second tap mid-flight) still navigates; only the animation is lost.
+    t.ready.catch(() => {});
+    t.finished.catch(() => {});
   }, []);
 
   useEffect(() => {
-    const onHash = () => setRoute(routeFromHash());
+    // Browser back/forward: reset scroll too, which hashchange alone does not do.
+    const onHash = () => {
+      setRoute(routeFromHash());
+      window.scrollTo({ top: 0 });
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);

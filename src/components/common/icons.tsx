@@ -17,22 +17,24 @@ export function RankIcon({ accessory, size = 16, className = '' }: { accessory: 
   return <Icon size={size} strokeWidth={1.9} className={className} aria-hidden />;
 }
 
-/** Flame grows with the streak: grey at 0, then amber, orange and red (30+ sways gently). */
+/** Flame grows with the streak: grey outline at 0, small 1–2, medium 3–6, large with a glow from 7. */
 export function StreakFlame({ days, size = 18 }: { days: number; size?: number }) {
-  const tier = days <= 0 ? 0 : days < 7 ? 1 : days < 30 ? 2 : 3;
+  const tier = days <= 0 ? 0 : days < 3 ? 1 : days < 7 ? 2 : 3;
   const color = ['rgb(var(--c-ink-soft) / .5)', '#E8A33D', '#E8772E', '#D9482B'][tier];
-  const scale = [0.85, 0.9, 1, 1.12][tier];
+  const scale = [0.85, 0.85, 1, 1.18][tier];
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden className={tier === 3 ? 'flame-sway' : ''} style={{ transform: `scale(${scale})` }}>
-      <path
-        d="M12 2.5c.6 3.2 3.4 4.9 4.9 7.6 1.9 3.4.6 9.4-4.9 9.4s-7-4.4-5.6-8c.6 1.6 1.7 2.4 2.7 2.4-.9-3.7.8-7.6 2.9-11.4z"
-        fill={tier ? color : 'none'}
-        stroke={color}
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-      {tier > 0 && <path d="M12 12.5c1.2 1.4 2 2.6 2 4a2 2 0 0 1-4 0c0-1.3.8-2.5 2-4z" fill="#FFE3A3" />}
-    </svg>
+    <span className="inline-flex" style={{ transform: `scale(${scale})`, transition: 'transform var(--dur-slow) var(--ease-spring)' }}>
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden className={`${tier ? 'flame-sway' : ''} ${tier === 3 ? 'flame-glow' : ''}`}>
+        <path
+          d="M12 2.5c.6 3.2 3.4 4.9 4.9 7.6 1.9 3.4.6 9.4-4.9 9.4s-7-4.4-5.6-8c.6 1.6 1.7 2.4 2.7 2.4-.9-3.7.8-7.6 2.9-11.4z"
+          fill={tier ? color : 'none'}
+          stroke={color}
+          strokeWidth="1.9"
+          strokeLinejoin="round"
+        />
+        {tier > 0 && <path d="M12 12.5c1.2 1.4 2 2.6 2 4a2 2 0 0 1-4 0c0-1.3.8-2.5 2-4z" fill="#FFE3A3" />}
+      </svg>
+    </span>
   );
 }
 

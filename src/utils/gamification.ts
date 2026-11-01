@@ -36,6 +36,8 @@ export function nextLevelProgress(xp: number): { current: LevelTier; next?: Leve
 // ─── XP Engine (derived deterministically from source tables) ────────────────
 // +10 XP / 30 min study · +25 XP / completed ritual · +50 XP / revision cycle · +100 XP / mock analyzed
 
+export const RITUAL_XP = 25;
+
 export function ritualCount(r: DailyRituals): number {
   let n = 0;
   if (r.newspaperRead) n++;
@@ -63,7 +65,7 @@ export interface XPBreakdown {
 export function computeXP(b: StatsBundle): XPBreakdown {
   const totalMinutes = b.timeLogs.reduce((s, l) => s + l.durationMinutes, 0);
   const study = Math.floor(totalMinutes / 30) * 10;
-  const rituals = b.rituals.reduce((s, r) => s + ritualCount(r) * 25, 0);
+  const rituals = b.rituals.reduce((s, r) => s + ritualCount(r) * RITUAL_XP, 0);
   const syllabusCycles = b.syllabus.reduce((s, i) => s + revisionCycles(i.status, i.revisionCount) * 50, 0);
   const bookCycles = b.resources.reduce((s, r) => s + r.currentRevision * 50, 0);
   const mocks = b.mocks.length * 100;
